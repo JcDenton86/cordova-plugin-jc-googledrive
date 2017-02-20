@@ -64,7 +64,7 @@ That's it! You are ready to use the plugin.
 
 ## Use from Javascript
 
-If you are using jQuery, AngularJS, WinJS or any Promise/A library (Bluebird), promise style is supported. Use something like:
+If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise style is supported. Use something like:
 
     var toLocalDest = "path/to/local/destination/";
     var fileid = "GoogleDrive_FileID";
