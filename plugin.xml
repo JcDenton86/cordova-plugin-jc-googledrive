@@ -33,7 +33,7 @@
         </config-file>
 
         <!--No classes atm-->
-        <source-file src="android/src/GoogleDrive.java" target-dir="src/gr/lexicon/googleDrive" />
+        <source-file src="android/GoogleDrive.java" target-dir="src/gr/lexicon/googleDrive" />
     </platform>
 
     <platform name="ios">
