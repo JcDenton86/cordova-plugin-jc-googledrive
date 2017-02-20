@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-google-drive" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>GoogleDrive</name>
+    <description>Access Google Drive</description>
+    <author>LexiconMe team</author>
+    <keywords>google drive</keywords>
+    <license>MIT</license>
+
+    <!--<engines>-->
+        <!--<engine name="cordova" version=">=3.0.0" />-->
+    <!--</engines>-->
+
+    <preference name="IOS_CLIENT_ID" />
+    <preference name="IOS_REVERSED_CLIENT_ID" />
+
+    <js-module src="www/googleDrive.js" name="GoogleDrive">
+        <clobbers target="window.plugins.gdrive" />
+    </js-module>
+
+    <platform name="android">
+        <framework src="com.google.android.gms:play-services-auth:10.0.1" />
+        <framework src="com.google.api-client:google-api-client-android:1.22.0" />
+        <framework src="com.google.apis:google-api-services-drive:v3-rev58-1.22.0" />
+
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="GoogleDrive" >
+                <param name="android-package" value="gr.lexicon.googleDrive.GoogleDrive"/>
+            </feature>
+        </config-file>
+
+        <config-file targert="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+        </config-file>
+
+        <!--No classes atm-->
+        <source-file src="android/src/GoogleDrive.java" target-dir="src/gr/lexicon/googleDrive" />
+    </platform>
+
+    <platform name="ios">
+        <dependency id="cordova-plugin-cocoapod-support" />
+
+        <config-file target="config.xml" parent="/*">
+            <feature name="GoogleDrive">
+                <param name="ios-package" value="GoogleDrive" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <pod id='GoogleAPIClientForREST/Drive' />
+        <pod id="GTMAppAuth" />
+
+        <config-file target="*-Info.plist" parent="CFBundleURLTypes">
+            <array>
+                <dict>
+                    <key>CFBundleURLName</key>
+                    <string>reversedClientId</string>
+                    <key>CFBundleURLSchemes</key>
+                    <array>
+                        <string name="reversedClientId">$IOS_REVERSED_CLIENT_ID</string>
+                    </array>
+                </dict>
+                <dict>
+                    <key>CFBundleURLName</key>
+                    <string>clientId</string>
+                    <key>CFBundleURLSchemes</key>
+                    <array>
+                        <string name="clientId">$IOS_CLIENT_ID</string>
+                    </array>
+                </dict>
+            </array>
+        </config-file>
+
+        <header-file src="ios/GoogleDrive.h"/>
+        <source-file src="ios/GoogleDrive.m"/>
+
+    </platform>
+</plugin>
