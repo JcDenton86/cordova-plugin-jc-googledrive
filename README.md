@@ -6,7 +6,7 @@ Access Google Drive Rest API using the recommended library. Read more [here](htt
 
 ### Prerequistics
 ``
-$ git clone https://github.com/JcDenton/cordova-google-drive-plugin.git
+$ git clone https://github.com/JcDenton86/cordova-plugin-googledrive.git
 ``
 
 #### For iOS
@@ -22,7 +22,7 @@ Visit the [iOS quickstart](https://developers.google.com/drive/ios/quickstart) g
 If you are using [cordova-cli](https://github.com/apache/cordova-cli), install
 with:
 
-    cordova plugin add GoogleDrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.1234567890-abcdefghijklmnop12qrstuvwxyz --variable IOS_CLIENT_ID=1234567890-abcdefghijklmnop12qrstuvwxyz.apps.googleusercontent.com
+    cordova plugin add cordova-plugin-googledrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.1234567890-abcdefghijklmnop12qrstuvwxyz --variable IOS_CLIENT_ID=1234567890-abcdefghijklmnop12qrstuvwxyz.apps.googleusercontent.com
     
 This plugin requires some additions to make it work on __iOS__ properly:
 
