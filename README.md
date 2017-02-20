@@ -103,8 +103,5 @@ Leaving issues or requests is accepted but my free time in not enough which mean
 
 ## Credits
 
-Written by [Jeries Besharat](http://studens.ceid.upatras.gr/~besarat)
-
-People that have contributed fixes and new features:
-
-[Dionisios Papathanopoulos](https://se.linkedin.com/in/dionysios-papathanopoulos-1353a649)
+iOS version written by [Jeries Besharat](http://studens.ceid.upatras.gr/~besarat)
+Android Version written by [Dionisios Papathanopoulos](https://se.linkedin.com/in/dionysios-papathanopoulos-1353a649)
