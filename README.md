@@ -15,14 +15,14 @@ Visit the [iOS quickstart](https://developers.google.com/drive/ios/quickstart) g
 
 #### For Android
 
-...
+Visit the [Android quickstart](https://developers.google.com/drive/android/get-started) and follow the __only__ the getting started page
 
 ### Install with cordova-cli
 
 If you are using [cordova-cli](https://github.com/apache/cordova-cli), install
 with:
 
-    cordova plugin add cordova-plugin-googledrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.1234567890-abcdefghijklmnop12qrstuvwxyz --variable IOS_CLIENT_ID=1234567890-abcdefghijklmnop12qrstuvwxyz.apps.googleusercontent.com
+    cordova plugin add cordova-plugin-googledrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.1234567890-abcdefghijklmnop12qrstuvwxyz --variable IOS_CLIENT_ID=1234567890-abcdefghijklmnop12qrstuvwxyz.apps.googleusercontent.com --variable ANDROID_CLIENT_ID=650563323037-ppm5nrgaikfligjtrjj14uqfhcp4trnm.apps.googleusercontent.com
     
 This plugin requires some additions to make it work on __iOS__ properly:
 
