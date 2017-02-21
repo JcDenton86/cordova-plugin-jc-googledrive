@@ -103,7 +103,7 @@ Leaving issues or requests is accepted but my free time in not enough which mean
 
 ## Credits
 
-This plugin has been created by [Jeries Besharat](http://studens.ceid.upatras.gr/~besarat)
+This plugin has been created by [Jeries Besharat](http://students.ceid.upatras.gr/~besarat)
 Other people that have contributed and commited features and improvements:
 
-* [Dionisios Papathanopoulos](https://se.linkedin.com/in/dionysios-papathanopoulos-1353a649)
+* [Dionysios Papathanopoulos](https://se.linkedin.com/in/dionysios-papathanopoulos-1353a649)
