@@ -38,7 +38,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webview){
-        super.initialize(cordova, webView);
+        super.initialize(cordova, webview);
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
                     .addApi(Drive.API)
