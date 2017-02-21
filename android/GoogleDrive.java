@@ -1,73 +1,80 @@
 package gr.lexicon.googleDrive;
 
+import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
-import android.Manifest;
-import android.app.Dialog;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
-import android.support.annotation.NonNull;
+import android.content.IntentSender;
+import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.FileList;
-import android.content.Context;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveApi;
+import com.google.android.gms.drive.DriveContents;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.MetadataChangeSet;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.URI;
 
-import gr.lexicon.team.MainActivity;
-import pub.devrel.easypermissions.AfterPermissionGranted;
-import pub.devrel.easypermissions.EasyPermissions;
+public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-public class GoogleDrive extends CordovaPlugin  implements EasyPermissions.PermissionCallbacks {
+    private static final String TAG = "GoogleDrivePlugin";
+    private static final int REQUEST_CODE_RESOLUTION = 3;
+    private GoogleApiClient mGoogleApiClient;
 
-    private String dbname = "lexiconMe.db";
-    static final int REQUEST_ACCOUNT_PICKER = 1000;
-    static final int REQUEST_AUTHORIZATION = 1001;
-    static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
-    static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
-    GoogleAccountCredential mCredential;
-    private static final String[] SCOPES = { DriveScopes.DRIVE_METADATA_READONLY };
-    private static final String PREF_ACCOUNT_NAME = "accountName";
+    @Override
+    public void initialize(CordovaInterface cordova, CordovaWebView webview){
+        super.initialize(cordova, webView);
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
+                    .addApi(Drive.API)
+                    .addScope(Drive.SCOPE_FILE)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+        }
+        mGoogleApiClient.connect();
+        Log.i(TAG,"Plugin initialized");
+    }
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        //JSONObject arg_object = args.getJSONObject(0);
+        JSONObject jobject = args.getJSONObject(0);
+        Log.i(TAG,jobject.toString());
 
-        if ("downloadDB".equals(action)) {
-            downloadDB(callbackContext);
+        if ("downloadFile".equals(action)) {
+            downloadFile("", "", callbackContext);
+            return true;
+        } else if("uploadFile".equals(action)){
+            uploadFile("",callbackContext);
             return true;
         }
-        else if("uploadDB".equals(action)){
-            uploadDB(callbackContext);
-            return true;
-        }
-
-
         return false;
     }
 
-    private void downloadDB(CallbackContext callbackContext) {
-        Toast.makeText(webView.getContext(),"just writing something", Toast.LENGTH_LONG).show();
+    private void downloadFile(String destPath,String fileid,final CallbackContext callbackContext) {
+        /*Toast.makeText(webView.getContext(),"just writing something", Toast.LENGTH_LONG).show();
         //Toast.makeText(webView.getContext(),"downloadDB",Toast.LENGTH_LONG).show();
+        Path path = Paths.get(destPath);
+        String dbname = path.getFileName().toString();
         File dbfile = cordova.getActivity().getDatabasePath(dbname);
         if (dbfile != null){
             Toast.makeText(webView.getContext(),"file found" + dbfile.getName(), Toast.LENGTH_LONG).show();
@@ -78,194 +85,100 @@ public class GoogleDrive extends CordovaPlugin  implements EasyPermissions.Permi
                     .setBackOff(new ExponentialBackOff());
             getResultsFromApi();
         }
-        callbackContext.success("download called");
+        callbackContext.success("download called");*/
     }
 
-    private void uploadDB(CallbackContext callbackContext) {
-        Toast.makeText(webView.getContext(),"uploadDB",Toast.LENGTH_LONG).show();
-        callbackContext.success("upload called");
+    private void uploadFile(final String fpath, final CallbackContext callbackContext) {
+
+        Drive.DriveApi.newDriveContents(mGoogleApiClient)
+                .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
+                        @Override
+                        public void onResult(DriveApi.DriveContentsResult result) {
+
+                            final DriveContents driveContents = result.getDriveContents();
+
+                            // If the operation was not successful, we cannot do anything
+                            // and must
+                            // fail.
+                            if (!result.getStatus().isSuccess()) {
+                                Log.i(TAG, "Failed to create new contents.");
+                                callbackContext.error(1);
+                                return;
+                            }
+
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    // Otherwise, we can write our data to the new contents.
+                                    Log.i(TAG, "New contents created.");
+                                    // Get an output stream for the contents.
+                                    OutputStream outputStream = driveContents.getOutputStream();
+                                    Uri fPathURI = Uri.fromFile(new File(fpath));;
+                                    try{
+                                        InputStream inputStream = cordova.getActivity().getContentResolver().openInputStream(fPathURI);
+                                        if (inputStream != null) {
+                                            byte[] data = new byte[1024];
+                                            while (inputStream.read(data) != -1) {
+                                                outputStream.write(data);
+                                            }
+                                            inputStream.close();
+                                        }
+                                        outputStream.close();
+                                    } catch (IOException e) {
+                                        Log.e(TAG, e.getMessage());
+                                    }
+                                    // Create the initial metadata - MIME type and title.
+                                    // Note that the user will be able to change the title later.
+                                    //String[] segments = fpath.split("/");
+                                    String fname = fPathURI.getLastPathSegment();
+                                    Log.i(TAG,fname);
+                                    //String fname = segments[segments.length-1];
+                                    MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
+                                            .setMimeType("application/octet-stream").setTitle(fname).build();
+                                    Drive.DriveApi.getRootFolder(mGoogleApiClient)
+                                            .createFile(mGoogleApiClient, metadataChangeSet, driveContents)
+                                            .setResultCallback(fileCallback);
+
+                                }
+                            }.start();
+                        }
+                });
     }
 
-
-
-    /**
-     * Attempt to call the API, after verifying that all the preconditions are
-     * satisfied. The preconditions are: Google Play Services installed, an
-     * account was selected and the device currently has online access. If any
-     * of the preconditions are not satisfied, the app will prompt the user as
-     * appropriate.
-     */
-    private void getResultsFromApi() {
-        Log.i("test", "Entering getResultsFromAPi 1" + isGooglePlayServicesAvailable());
-        Log.i("test", "Entering getResultsFromAPi 2" + isDeviceOnline());
-        Log.i("test", "Entering getResultsFromAPi 3" + mCredential.getSelectedAccountName());
-        if (!isGooglePlayServicesAvailable()) {
-            acquireGooglePlayServices();
-        } else if (mCredential.getSelectedAccountName() == null) {
-            Log.i("test", "passing second check");
-            chooseAccount();
-        } else if (! isDeviceOnline()) {
-            //Toast.makeText(webView.getContext(),"No Internet Connection!!!",Toast.LENGTH_LONG).show();
-        } else {
-            Log.i("test", "Creating the Task");
-            new MakeRequestTask(mCredential).execute();
-        }
-    }
-
-    /**
-     * An asynchronous task that handles the Drive API call.
-     * Placing the API calls in their own task ensures the UI stays responsive.
-     */
-    private class MakeRequestTask extends AsyncTask<Void, Void, List<String>> {
-        private com.google.api.services.drive.Drive mService = null;
-        private Exception mLastError = null;
-
-        MakeRequestTask(GoogleAccountCredential credential) {
-            HttpTransport transport = AndroidHttp.newCompatibleTransport();
-            JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-            mService = new com.google.api.services.drive.Drive.Builder(
-                    transport, jsonFactory, credential)
-                    .setApplicationName("Drive API Android Quickstart")
-                    .build();
-        }
-
-        /**
-         * Background task to call Drive API.
-         * @param params no parameters needed for this task.
-         */
+    final private ResultCallback<DriveFolder.DriveFileResult> fileCallback = new ResultCallback<DriveFolder.DriveFileResult>() {
         @Override
-        protected List<String> doInBackground(Void... params) {
-            try {
-                return getDataFromApi();
-            } catch (Exception e) {
-                mLastError = e;
-                cancel(true);
-                return null;
+        public void onResult(DriveFolder.DriveFileResult result) {
+            if (result.getStatus().isSuccess()) {
+                Log.i(TAG,result.getDriveFile().getDriveId()+"");
             }
+            return;
+
         }
+    };
 
-        /**
-         * Fetch a list of up to 10 file names and IDs.
-         * @return List of Strings describing files, or an empty list if no files
-         *         found.
-         * @throws IOException
-         */
-        private List<String> getDataFromApi() throws IOException {
-            // Get a list of up to 10 files.
-            List<String> fileInfo = new ArrayList<String>();
-            FileList result = mService.files().list()
-                    .setPageSize(10)
-                    .setFields("nextPageToken, files(id, name)")
-                    .execute();
-//        List<File> files = result.getFiles();
-//        if (files != null) {
-//            for (File file : files) {
-//                fileInfo.add(String.format("%s (%s)\n",
-//                        file.getName(), file.getId()));
-//            }
-//        }
-            return fileInfo;
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        // Called whenever the API client fails to connect.
+        Log.i(TAG, "GoogleApiClient connection failed: " + result.toString());
+        if (!result.hasResolution()) {
+            // show the localized error dialog.
+            GoogleApiAvailability.getInstance().getErrorDialog(cordova.getActivity(), result.getErrorCode(), 0).show();
+            return;
         }
-    }
-
-
-    /**
-     * Checks whether the device currently has a network connection.
-     * @return true if the device has a network connection, false otherwise.
-     */
-    private boolean isDeviceOnline() {
-        ConnectivityManager connMgr = (ConnectivityManager) cordova.getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected());
-    }
-    /**
-     * Attempts to set the account used with the API credentials. If an account
-     * name was previously saved it will use that one; otherwise an account
-     * picker dialog will be shown to the user. Note that the setting the
-     * account to use with the credentials object requires the app to have the
-     * GET_ACCOUNTS permission, which is requested here if it is not already
-     * present. The AfterPermissionGranted annotation indicates that this
-     * function will be rerun automatically whenever the GET_ACCOUNTS permission
-     * is granted.
-     */
-    @AfterPermissionGranted(REQUEST_PERMISSION_GET_ACCOUNTS)
-    private void chooseAccount() {
-        Log.i("test", "choose Account");
-        if (EasyPermissions.hasPermissions(cordova.getActivity(), Manifest.permission.GET_ACCOUNTS)) {
-            //changed the prefernces here
-            String accountName = cordova.getActivity().getPreferences(Context.MODE_PRIVATE).getString(PREF_ACCOUNT_NAME, null);
-            if (accountName != null) {
-                mCredential.setSelectedAccountName(accountName);
-                getResultsFromApi();
-            } else {
-                // Start a dialog from which the user can choose an account
-//                startActivityForResult(
-//                        mCredential.newChooseAccountIntent(),
-//                        REQUEST_ACCOUNT_PICKER);
-                Toast.makeText(webView.getContext(),"Asking for Permissions", Toast.LENGTH_LONG).show();
-
-            }
-        } else {
-            // TODO: 15/02/2017 The app stops here for now
-            Log.i("test", "maybe some problem with the permission get accounts");
-            // Request the GET_ACCOUNTS permission via a user dialog
-            EasyPermissions.requestPermissions(
-                    cordova.getActivity(),
-                    "This app needs to access your Google account (via Contacts).",
-                    REQUEST_PERMISSION_GET_ACCOUNTS,
-                    Manifest.permission.GET_ACCOUNTS);
+        try {
+            result.startResolutionForResult(cordova.getActivity(), REQUEST_CODE_RESOLUTION);
+        } catch (IntentSender.SendIntentException e) {
+            Log.e(TAG, "Exception while starting resolution activity", e);
         }
-    }
-
-
-    /**
-     * Check that Google Play services APK is installed and up to date.
-     * @return true if Google Play Services is available and up to
-     *     date on this device; false otherwise.
-     */
-    private boolean isGooglePlayServicesAvailable() {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        final int connectionStatusCode = apiAvailability.isGooglePlayServicesAvailable(cordova.getActivity());
-        return connectionStatusCode == ConnectionResult.SUCCESS;
-    }
-
-    /**
-     * Attempt to resolve a missing, out-of-date, invalid or disabled Google
-     * Play Services installation via a user dialog, if possible.
-     */
-    private void acquireGooglePlayServices() {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        final int connectionStatusCode = apiAvailability.isGooglePlayServicesAvailable(cordova.getActivity());
-        if (apiAvailability.isUserResolvableError(connectionStatusCode)) {
-            showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
-        }
-    }
-
-    /**
-     * Display an error dialog showing that Google Play Services is missing
-     * or out of date.
-     * @param connectionStatusCode code describing the presence (or lack of)
-     *     Google Play Services on this device.
-     */
-    void showGooglePlayServicesAvailabilityErrorDialog( final int connectionStatusCode) {
-       // GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-       // Dialog dialog = apiAvailability.getErrorDialog(context, connectionStatusCode, REQUEST_GOOGLE_PLAY_SERVICES);
-       // dialog.show();
-        Toast.makeText(webView.getContext(),"Error with GooglePlay servecs!!! " + REQUEST_GOOGLE_PLAY_SERVICES,Toast.LENGTH_LONG).show();
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode, List<String> perms) {
-
+    public void onConnected(Bundle connectionHint) {
+        Log.i(TAG, "API client connected.");
     }
 
     @Override
-    public void onPermissionsDenied(int requestCode, List<String> perms) {
-
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-
+    public void onConnectionSuspended(int cause) {
+        Log.i(TAG, "GoogleApiClient connection suspended");
     }
 }
