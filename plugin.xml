@@ -10,6 +10,8 @@
         <engine name="cordova" version=">=3.0.0" />
     </engines>
 
+
+
     <js-module src="www/googleDrive.js" name="GoogleDrive">
         <clobbers target="window.plugins.gdrive" />
     </js-module>
@@ -17,10 +19,8 @@
     <platform name="android">
         <preference name="ANDROID_CLIENT_ID" />
 
-        <framework src="com.google.android.gms:play-services-drive:8.4.0" />
-        <!--<framework src="com.google.android.gms:play-services-auth:10.0.1" />-->
-        <!--<framework src="com.google.api-client:google-api-client-android:1.22.0" />-->
-        <!--<framework src="com.google.apis:google-api-services-drive:v3-rev58-1.22.0" />-->
+        <framework src="com.android.support:appcompat-v7:23.0.1" />
+        <framework src="com.google.android.gms:play-services-drive:10.2.0" />
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="GoogleDrive" >
@@ -29,9 +29,6 @@
         </config-file>
 
         <config-file targert="AndroidManifest.xml" parent="/manifest/application">
-            <meta-data
-                    android:name="com.google.android.gms.version"
-                    android:value="@integer/google_play_services_version" />
             <meta-data
                     android:name="com.google.android.geo.API_KEY"
                     android:value="$ANDROID_CLIENT_ID" />
