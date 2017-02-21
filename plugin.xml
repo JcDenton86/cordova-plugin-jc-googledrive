@@ -6,21 +6,21 @@
     <keywords>google drive</keywords>
     <license>MIT</license>
 
-    <!--<engines>-->
-        <!--<engine name="cordova" version=">=3.0.0" />-->
-    <!--</engines>-->
-
-    <preference name="IOS_CLIENT_ID" />
-    <preference name="IOS_REVERSED_CLIENT_ID" />
+    <engines>
+        <engine name="cordova" version=">=3.0.0" />
+    </engines>
 
     <js-module src="www/googleDrive.js" name="GoogleDrive">
         <clobbers target="window.plugins.gdrive" />
     </js-module>
 
     <platform name="android">
-        <framework src="com.google.android.gms:play-services-auth:10.0.1" />
-        <framework src="com.google.api-client:google-api-client-android:1.22.0" />
-        <framework src="com.google.apis:google-api-services-drive:v3-rev58-1.22.0" />
+        <preference name="ANDROID_CLIENT_ID" />
+
+        <framework src="com.google.android.gms:play-services-drive:8.4.0" />
+        <!--<framework src="com.google.android.gms:play-services-auth:10.0.1" />-->
+        <!--<framework src="com.google.api-client:google-api-client-android:1.22.0" />-->
+        <!--<framework src="com.google.apis:google-api-services-drive:v3-rev58-1.22.0" />-->
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="GoogleDrive" >
@@ -28,8 +28,13 @@
             </feature>
         </config-file>
 
-        <config-file targert="AndroidManifest.xml" parent="/*">
-            <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+        <config-file targert="AndroidManifest.xml" parent="/manifest/application">
+            <meta-data
+                    android:name="com.google.android.gms.version"
+                    android:value="@integer/google_play_services_version" />
+            <meta-data
+                    android:name="com.google.android.geo.API_KEY"
+                    android:value="$ANDROID_CLIENT_ID" />
         </config-file>
 
         <!--No classes atm-->
@@ -37,6 +42,9 @@
     </platform>
 
     <platform name="ios">
+        <preference name="IOS_CLIENT_ID" />
+        <preference name="IOS_REVERSED_CLIENT_ID" />
+
         <dependency id="cordova-plugin-cocoapod-support" />
 
         <config-file target="config.xml" parent="/*">

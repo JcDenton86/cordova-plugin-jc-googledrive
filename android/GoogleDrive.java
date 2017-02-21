@@ -25,14 +25,10 @@ import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.MetadataChangeSet;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.URI;
 
 public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -57,14 +53,16 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        JSONObject jobject = args.getJSONObject(0);
-        Log.i(TAG,jobject.toString());
+        //JSONObject jobject = args.getJSONObject(0);
 
         if ("downloadFile".equals(action)) {
-            downloadFile("", "", callbackContext);
+            String toLocalDest = args.getString(0);
+            String fileid = args.getString(1);
+            downloadFile(toLocalDest, fileid, callbackContext);
             return true;
         } else if("uploadFile".equals(action)){
-            uploadFile("",callbackContext);
+            String localFPath = args.getString(0);
+            uploadFile(localFPath,callbackContext);
             return true;
         }
         return false;
