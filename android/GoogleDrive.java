@@ -13,26 +13,27 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.query.Filters;
+import com.google.android.gms.drive.query.Query;
+import com.google.android.gms.drive.query.SearchableField;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
 public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -86,6 +87,14 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         localFPath = args.getString(0);
                         uploadFile(localFPath);
                     }catch(JSONException ex){ex.getLocalizedMessage();}
+                }
+            });
+            return true;
+        } else if("fileList".equals(action)){
+            cordova.getThreadPool().execute(new Runnable() {
+                @Override
+                public void run() {
+                    fileList();
                 }
             });
             return true;
@@ -155,6 +164,25 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 });
     }
 
+    private void fileList() {
+        Query query = new Query.Builder().addFilter(Filters.and(
+                Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream"),
+                Filters.eq(SearchableField.TRASHED, false))).build();
+
+        Drive.DriveApi.query(mGoogleApiClient, query)
+                .setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
+                    @Override
+                    public void onResult(DriveApi.MetadataBufferResult result) {
+                        if (!result.getStatus().isSuccess()) {
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to retrieve file list"));
+                            return;
+                        }
+                        MetadataBuffer list = result.getMetadataBuffer();
+                        Log.i(TAG,list.toString());
+                    }
+                });
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -164,6 +192,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 downloadFile(toLocalDest,fileid);
             } else if(mAction.equals("uploadFile")){
                 uploadFile(localFPath);
+            } else if(mAction.equals("fileList")){
+                fileList();
             }
         }
     }
