@@ -73,7 +73,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     try {
                         toLocalDest = args.getString(0);
                         fileid = args.getString(1);
-                        downloadFile(toLocalDest, fileid, callbackContext);
+                        downloadFile(toLocalDest, fileid);
                     } catch (JSONException ex){ex.getLocalizedMessage();}
                 }
             });
@@ -84,7 +84,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         localFPath = args.getString(0);
-                        uploadFile(localFPath, callbackContext);
+                        uploadFile(localFPath);
                     }catch(JSONException ex){ex.getLocalizedMessage();}
                 }
             });
@@ -93,26 +93,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         return false;
     }
 
-    private void downloadFile(String destPath,String fileid,final CallbackContext callbackContext) {
-        /*Toast.makeText(webView.getContext(),"just writing something", Toast.LENGTH_LONG).show();
-        //Toast.makeText(webView.getContext(),"downloadDB",Toast.LENGTH_LONG).show();
-        Path path = Paths.get(destPath);
-        String dbname = path.getFileName().toString();
-        File dbfile = cordova.getActivity().getDatabasePath(dbname);
-        if (dbfile != null){
-            Toast.makeText(webView.getContext(),"file found" + dbfile.getName(), Toast.LENGTH_LONG).show();
-            Log.i("test", "file found calling getResultsFromAPi");
-            // Initialize credentials and service object.
-            mCredential = GoogleAccountCredential.usingOAuth2(
-                    cordova.getActivity(), Arrays.asList(SCOPES))
-                    .setBackOff(new ExponentialBackOff());
-            getResultsFromApi();
-        }
-        callbackContext.success("download called");*/
+    private void downloadFile(String destPath,String fileid) {
     }
 
-    private void uploadFile(final String fpath, final CallbackContext callbackContext) {
-
+    private void uploadFile(final String fpath) {
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
 
@@ -120,21 +104,15 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     public void onResult(DriveApi.DriveContentsResult result) {
                         final DriveContents driveContents = result.getDriveContents();
 
-                        // If the operation was not successful, we cannot do anything
-                        // and must
-                        // fail.
                         if (!result.getStatus().isSuccess()) {
-                            Log.i(TAG, "Failed to create new contents.");
-                            callbackContext.error(1);
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Failed to create new contents"));
                             return;
                             }
 
                         new Thread() {
                             @Override
                             public void run() {
-                                // Otherwise, we can write our data to the new contents.
                                 Log.i(TAG, "New contents created.");
-                                // Get an output stream for the contents.
                                 OutputStream outputStream = driveContents.getOutputStream();
                                 Uri fPathURI = Uri.fromFile(new File(fpath));;
                                 try{
@@ -152,30 +130,30 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                                 }
 
                                 String fname = fPathURI.getLastPathSegment();
-                                Log.i(TAG,fname);
-
+                                //Log.i(TAG,fname);
                                 MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
                                         .setMimeType("application/octet-stream").setTitle(fname).build();
                                 Drive.DriveApi.getRootFolder(mGoogleApiClient)
                                         .createFile(mGoogleApiClient, metadataChangeSet, driveContents)
-                                        .setResultCallback(fileCallback);
-
+                                        .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
+                                            @Override
+                                            public void onResult(DriveFolder.DriveFileResult result) {
+                                                if (result.getStatus().isSuccess()) {
+                                                    try {
+                                                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, new JSONObject().put("fileId", result.getDriveFile().getDriveId())));
+                                                    } catch (JSONException ex) {
+                                                        Log.i(TAG, ex.getMessage());
+                                                    }
+                                                    Log.i(TAG, result.getDriveFile().getDriveId() + "");
+                                                }
+                                                return;
+                                            }
+                                        });
                             }
                         }.start();
                     }
                 });
     }
-
-    final private ResultCallback<DriveFolder.DriveFileResult> fileCallback = new ResultCallback<DriveFolder.DriveFileResult>() {
-        @Override
-        public void onResult(DriveFolder.DriveFileResult result) {
-            if (result.getStatus().isSuccess()) {
-                Log.i(TAG,result.getDriveFile().getDriveId()+"");
-            }
-            return;
-
-        }
-    };
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -183,9 +161,9 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         if (requestCode == REQUEST_CODE_RESOLUTION && resultCode == RESULT_OK) {
             mGoogleApiClient.connect();
             if(mAction.equals("downloadFile")){
-                downloadFile(toLocalDest,fileid,mCallbackContext);
+                downloadFile(toLocalDest,fileid);
             } else if(mAction.equals("uploadFile")){
-                uploadFile(localFPath,mCallbackContext);
+                uploadFile(localFPath);
             }
         }
     }
