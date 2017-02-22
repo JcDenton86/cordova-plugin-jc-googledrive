@@ -23,6 +23,7 @@ import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Filters;
@@ -155,7 +156,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                                                     }
                                                     Log.i(TAG, result.getDriveFile().getDriveId() + "");
                                                 }
-                                                return;
                                             }
                                         });
                             }
@@ -177,8 +177,25 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                             mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to retrieve file list"));
                             return;
                         }
-                        MetadataBuffer list = result.getMetadataBuffer();
-                        Log.i(TAG,list.toString());
+                        MetadataBuffer flist = result.getMetadataBuffer();
+                        Log.i(TAG,flist.get(0).getClass().getName());
+                        JSONArray response = new JSONArray();
+                        for (Metadata file: flist
+                             ) {
+                            try {
+                                response.put(new JSONObject().put("name", file.getTitle()).put("created", file.getCreatedDate().toString()).put("id", file.getDriveId().toString()));
+                            }catch (JSONException ex){}
+                            Log.i(TAG,file.getTitle());
+                            Log.i(TAG,file.getCreatedDate()+"");
+                            Log.i(TAG,file.getDriveId().toString());
+                        }
+                        JSONObject flistJSON = new JSONObject();
+                        try{
+                            flistJSON.put("flist", response);
+                        } catch (JSONException ex){}
+                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,flistJSON));
+                        flist.release();
+                        //Log.i(TAG,flist.toString());
                     }
                 });
     }
