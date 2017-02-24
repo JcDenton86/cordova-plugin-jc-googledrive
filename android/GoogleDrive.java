@@ -13,16 +13,22 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
+import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
@@ -99,6 +105,16 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 }
             });
             return true;
+        } else if("deleteFile".equals(action)){
+            cordova.getThreadPool().execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        fileid = args.getString(0);
+                        deleteFile(fileid);
+                    } catch (JSONException ex){ex.getLocalizedMessage();}
+                }
+            });
         }
         return false;
     }
@@ -178,7 +194,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                             return;
                         }
                         MetadataBuffer flist = result.getMetadataBuffer();
-                        //Log.i(TAG,flist.get(0).getClass().getName());
                         JSONArray response = new JSONArray();
                         for (Metadata file: flist
                              ) {
@@ -195,6 +210,30 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         //Log.i(TAG,flist.toString());
                     }
                 });
+    }
+
+    private void deleteFile(String fileid){
+        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
+            @Override
+            public void onResult(@NonNull DriveResource.MetadataResult result) {
+                if (!result.getStatus().isSuccess()) {
+                    return;
+                }
+                final Metadata metadata = result.getMetadata();
+                if(metadata.isTrashable() && !metadata.isTrashed()){
+                    DriveFile f = metadata.getDriveId().asDriveFile();
+                    f.trash(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                        @Override
+                        public void onResult(@NonNull Status status) {
+                            if (!status.isSuccess()) {
+                                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to trash file with id "+metadata.getDriveId() ));
+                                return;
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
