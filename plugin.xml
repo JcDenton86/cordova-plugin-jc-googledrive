@@ -10,14 +10,11 @@
         <engine name="cordova" version=">=3.0.0" />
     </engines>
 
-
-
     <js-module src="www/googleDrive.js" name="GoogleDrive">
         <clobbers target="window.plugins.gdrive" />
     </js-module>
 
     <platform name="android">
-        <preference name="ANDROID_CLIENT_ID" />
 
         <framework src="com.android.support:appcompat-v7:23.0.1" />
         <framework src="com.google.android.gms:play-services-drive:10.2.0" />

@@ -22,8 +22,12 @@ Visit the [Android quickstart](https://developers.google.com/drive/android/get-s
 If you are using [cordova-cli](https://github.com/apache/cordova-cli), install
 with:
 
-    cordova plugin add cordova-plugin-googledrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.1234567890-abcdefghijklmnop12qrstuvwxyz --variable IOS_CLIENT_ID=1234567890-abcdefghijklmnop12qrstuvwxyz.apps.googleusercontent.com --variable ANDROID_CLIENT_ID=1234567890-abcdefghijklmnop12qrstuvwxyz.apps.googleusercontent.com
+    cordova plugin add cordova-plugin-googledrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.YOUR_CLIENT_ID --variable IOS_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
     
+The REVERSED_CLIENT_ID is the "iOS URL Scheme" on the Google Developer's Console.
+
+##### Read only for iOS
+
 This plugin requires some additions to make it work on __iOS__ properly:
 
 The plugin will install the dependencies using `pod`. So first make sure you have installed [cocoapods](https://cocoapods.org/).
@@ -62,39 +66,50 @@ Open `AppDelegate.h` file and paste this code before the `@end` command :
 
 That's it! You are ready to use the plugin. 
 
-## Use from Javascript
+## Usage (Javascript)
 
-If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise style is supported. Use something like:
-
-    var toLocalDest = "path/to/local/destination/";
-    var fileid = "GoogleDrive_FileID";
-    window.plugins.gdrive.downloadFile(toLocalDest, fileid, function (response) {
-        //simple response message with the status
-    });
-    
-    var fpath = "path/to/local/file.ext";
-    window.plugins.gdrive.uploadFile(fpath,function (response) {
-        //simple response message with the status
-    });
-    
-    window.plugins.gdrive.fileList(function(res){
-        //the files are under res.flist;
-        console.log(res);
-    },function(err){console.log(err);});
-    
-Javascript Methods currently supported:
+If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise style is supported.
 
 #### downloadFile
 
-Downloads previously uploaded file on user's Google Drive
+The `downloadFile` function follows the proper authentication procedure. If the user allows the app to access Google Drive, this method will download the file requested (fileId) and will save it to the path you indicated (toLocalDest).
+
+    var toLocalDest = "path/to/local/destination/";
+    var fileid = "GoogleDrive_FileID";
+    window.plugins.gdrive.downloadFile(toLocalDest, fileid,
+    	function (response) {
+        //simple response message with the status
+        },
+        function (error){
+        	console.log(error);
+        }
+    );
 
 #### uploadFile
 
-Uploads to user's Google Drive a local copy of a file
+The `uploadFile` function will upload a file selected from a given local path (fpath) to the root folder of user's drive.
+
+	var fpath = "path/to/local/file.ext";
+    window.plugins.gdrive.uploadFile(fpath,function (response) {
+        //simple response message with the status
+        },
+        function (error){
+        	console.log(error);
+        }
+    );
 
 #### fileList
 
-fetch all the files created/uploaded by the app (which have not been trashed)
+The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date (only on Android).
+
+	window.plugins.gdrive.fileList(function(res){
+        //the files are under res.flist;
+        console.log(res);
+    	},
+    	function(err){
+    		console.log(err);
+    	}
+    );
 
 ## Contribution
 This plugin is under heavy development and it has been created as a requirement on a personal mobile project. However, you are more than welcome to provide features and help with the development.
