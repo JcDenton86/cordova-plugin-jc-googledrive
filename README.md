@@ -74,7 +74,7 @@ If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise styl
 
 The `downloadFile` function follows the proper authentication procedure. If the user allows the app to access Google Drive, this method will download the file requested (fileId) and will save it to the path you indicated (toLocalDest).
 
- ```javascript
+```javascript
 var toLocalDest = "path/to/local/destination/";
 var fileid = "GoogleDrive_FileID";
 window.plugins.gdrive.downloadFile(toLocalDest, fileid,
@@ -85,7 +85,7 @@ window.plugins.gdrive.downloadFile(toLocalDest, fileid,
      	console.log(error);
    }
 );
- ```
+```
 
 #### uploadFile
 
@@ -95,7 +95,7 @@ The `uploadFile` function will upload a file selected from a given local path (f
 var fpath = "path/to/local/file.ext";
 window.plugins.gdrive.uploadFile(fpath,
    function (response) {
-   	//simple response message with the status
+   		//simple response message with the status
    },
    function (error){
      	console.log(error);
@@ -118,10 +118,20 @@ window.plugins.gdrive.fileList(
    }
 );
 ```
+The success callback will return a JSON object. The attribute `flist` will hold an array with the files found on user's Drive. 
+
+## RoadMap
+This plugin is under heavy development and it has been created as a requirement on a personal mobile project
+
+Functions to be included:
+
+- deleteFile
+- createFolderWithName
+- uploadFileInFolder (will allow folder selection)
 
 ## Contribution
-This plugin is under heavy development and it has been created as a requirement on a personal mobile project. However, you are more than welcome to provide features and help with the development.
 
+You are more than welcome to provide features and help with the development.
 Leaving issues or requests is accepted but my free time in not enough which means that I will try to support this plugin as long as my free time allows.  
 
 ## Credits
