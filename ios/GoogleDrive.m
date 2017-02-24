@@ -75,6 +75,21 @@ static NSString *kAuthorizerKey = @"";
     });
 }
 
+- (void)deleteFile:(CDVInvokedUrlCommand*)command{
+    
+    NSString* fileid = [command.arguments objectAtIndex:0];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if(self.authorization.canAuthorize){
+            [self deleteSelectedFile:command fid:fileid];
+            NSLog(@"Already authorized app. No need to ask user again");
+        } else{
+            [self runSigninThenHandler:^{
+                [self deleteSelectedFile:command fid:fileid];
+            }];
+        }
+    });
+}
+
 - (void)downloadAFile:(CDVInvokedUrlCommand*)command destPath:(NSString*)destPath fid:(NSString*)fileid {
     NSURL *fileToDownloadURL = [NSURL fileURLWithPath:destPath];
     //NSLog(@"%@", fileToDownloadURL);
@@ -200,6 +215,23 @@ static NSString *kAuthorizerKey = @"";
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
             } else {
                 [callbackTicket cancelTicket];
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[callbackError localizedDescription]];
+            }
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+}
+
+- (void)deleteSelectedFile:(CDVInvokedUrlCommand*)command fid:(NSString*) fileid{
+    GTLRDriveService *service = self.driveService;
+    
+        GTLRDriveQuery_FilesDelete *query = [GTLRDriveQuery_FilesDelete queryWithFileId:fileid];
+        [service executeQuery:query completionHandler:^(GTLRServiceTicket *callbackTicket,
+                                                        id nilObject,
+                                                        NSError *callbackError) {
+            CDVPluginResult* pluginResult = nil;
+            if (callbackError == nil) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            } else {
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[callbackError localizedDescription]];
             }
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
