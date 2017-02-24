@@ -74,42 +74,50 @@ If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise styl
 
 The `downloadFile` function follows the proper authentication procedure. If the user allows the app to access Google Drive, this method will download the file requested (fileId) and will save it to the path you indicated (toLocalDest).
 
-    var toLocalDest = "path/to/local/destination/";
-    var fileid = "GoogleDrive_FileID";
-    window.plugins.gdrive.downloadFile(toLocalDest, fileid,
-    	function (response) {
-        //simple response message with the status
-        },
-        function (error){
-        	console.log(error);
-        }
-    );
+ ```javascript
+var toLocalDest = "path/to/local/destination/";
+var fileid = "GoogleDrive_FileID";
+window.plugins.gdrive.downloadFile(toLocalDest, fileid,
+   function (response) {
+       //simple response message with the status
+   },
+   function (error){
+     	console.log(error);
+   }
+);
+ ```
 
 #### uploadFile
 
 The `uploadFile` function will upload a file selected from a given local path (fpath) to the root folder of user's drive.
 
-	var fpath = "path/to/local/file.ext";
-    window.plugins.gdrive.uploadFile(fpath,function (response) {
-        //simple response message with the status
-        },
-        function (error){
-        	console.log(error);
-        }
-    );
+```javascript
+var fpath = "path/to/local/file.ext";
+window.plugins.gdrive.uploadFile(fpath,
+   function (response) {
+   	//simple response message with the status
+   },
+   function (error){
+     	console.log(error);
+   }
+);
+```
 
 #### fileList
 
 The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date (only on Android).
 
-	window.plugins.gdrive.fileList(function(res){
+```javascript
+window.plugins.gdrive.fileList(
+   function(res){
         //the files are under res.flist;
-        console.log(res);
-    	},
-    	function(err){
-    		console.log(err);
-    	}
-    );
+	console.log(res);
+   },
+   function(err){
+	console.log(err);
+   }
+);
+```
 
 ## Contribution
 This plugin is under heavy development and it has been created as a requirement on a personal mobile project. However, you are more than welcome to provide features and help with the development.
