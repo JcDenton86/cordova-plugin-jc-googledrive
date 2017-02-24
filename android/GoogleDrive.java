@@ -115,6 +115,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     } catch (JSONException ex){ex.getLocalizedMessage();}
                 }
             });
+            return true;
         }
         return false;
     }
