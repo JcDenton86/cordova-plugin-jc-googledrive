@@ -178,16 +178,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                             return;
                         }
                         MetadataBuffer flist = result.getMetadataBuffer();
-                        Log.i(TAG,flist.get(0).getClass().getName());
+                        //Log.i(TAG,flist.get(0).getClass().getName());
                         JSONArray response = new JSONArray();
                         for (Metadata file: flist
                              ) {
                             try {
                                 response.put(new JSONObject().put("name", file.getTitle()).put("created", file.getCreatedDate().toString()).put("id", file.getDriveId().toString()));
                             }catch (JSONException ex){}
-                            Log.i(TAG,file.getTitle());
-                            Log.i(TAG,file.getCreatedDate()+"");
-                            Log.i(TAG,file.getDriveId().toString());
                         }
                         JSONObject flistJSON = new JSONObject();
                         try{

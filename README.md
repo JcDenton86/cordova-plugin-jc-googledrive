@@ -130,6 +130,7 @@ Functions to be included:
 - deleteFile
 - createFolderWithName
 - uploadFileInFolder (will allow folder selection)
+- disconnect
 
 ## Contribution
 
