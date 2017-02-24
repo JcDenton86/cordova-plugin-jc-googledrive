@@ -198,7 +198,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         for (Metadata file: flist
                              ) {
                             try {
-                                response.put(new JSONObject().put("name", file.getTitle()).put("created", file.getCreatedDate().toString()).put("id", file.getDriveId().toString()));
+                                response.put(new JSONObject().put("name", file.getTitle()).put("created", file.getCreatedDate().toString()).put("id", file.getDriveId()));
                             }catch (JSONException ex){}
                         }
                         JSONObject flistJSON = new JSONObject();
@@ -217,18 +217,21 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             @Override
             public void onResult(@NonNull DriveResource.MetadataResult result) {
                 if (!result.getStatus().isSuccess()) {
+                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"Something went wrong with file "));
                     return;
                 }
                 final Metadata metadata = result.getMetadata();
+                Log.i(TAG, metadata.getTitle());
                 if(metadata.isTrashable() && !metadata.isTrashed()){
                     DriveFile f = metadata.getDriveId().asDriveFile();
                     f.trash(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
                         @Override
-                        public void onResult(@NonNull Status status) {
+                        public void onResult(Status status) {
                             if (!status.isSuccess()) {
                                 mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to trash file with id "+metadata.getDriveId() ));
                                 return;
                             }
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
                         }
                     });
                 }
@@ -247,6 +250,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 uploadFile(localFPath);
             } else if(mAction.equals("fileList")){
                 fileList();
+            } else if(mAction.equals("deleteFile")){
+                deleteFile(fileid);
             }
         }
     }
