@@ -1,6 +1,6 @@
 # Cordova Google Drive plugin
 
-Access Google Drive Rest API using the recommended library. Read more [here](https://github.com/google/google-api-objectivec-client-for-rest).
+This plugin allows you to authenticate and access user's Google Drive account, using the new Rest API as recommended (Read more [here](https://github.com/google/google-api-objectivec-client-for-rest)).
 
 ## Installation
 
