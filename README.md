@@ -30,7 +30,9 @@ The REVERSED_CLIENT_ID is the "iOS URL Scheme" on the Google Developer's Console
 
 This plugin requires some additions to make it work on __iOS__ properly:
 
-The plugin will install the dependencies using `pod`. So first make sure you have installed [cocoapods](https://cocoapods.org/).
+Firstly, make sure you have installed [cocoapods](https://cocoapods.org/) because it is needed to install some dependencies using `pod`. 
+
+Secondly and after succesfull installation of the dependencies:
 
 Open `AppDelegate.m` file and add 1) these header files along with the rest on the top and 2) the code block before the `@end` command:
 
