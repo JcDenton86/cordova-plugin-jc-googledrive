@@ -9,13 +9,15 @@ This plugin allows you to authenticate and access user's Google Drive account, u
 $ git clone https://github.com/JcDenton86/cordova-plugin-googledrive.git
 ``
 
-#### For iOS
-
-Visit the [iOS quickstart](https://developers.google.com/drive/ios/quickstart) guide and complete __only__ step 1 (Turn on the Drive API).
-
-#### For Android
-
-Visit the [Android quickstart](https://developers.google.com/drive/android/get-started) and follow the __only__ the getting started page
+1. Open the [Library page](https://console.developers.google.com/apis/library) and enable the Google Drive API for a project (create a new project if you don't have one) 
+2. Open the [Credentials page](https://console.developers.google.com/apis/credentials) in the API Console and follow the steps below in the given order:
+    
+    * Click Create credentials > OAuth client ID.
+    * Select Android or iOS.
+    * In the Package name field (or Bundle ID for iOS), enter your app's package name.
+    * On Android: Paste the SHA1 fingerprint into the form where requested (on iOS skip this)
+        * read more [here](https://developers.google.com/drive/android/get-started) on how to do it
+    * Click Create.
 
 ### Install with cordova-cli
 
