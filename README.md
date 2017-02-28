@@ -110,13 +110,13 @@ window.plugins.gdrive.uploadFile(fpath,
 The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date (only on Android).
 
 ```javascript
-var fileid = "GoogleDrive_FileID";
-window.plugins.gdrive.deleteFile(fileid,
+window.plugins.gdrive.fileList(
    function(res){
-	console.log(res);
+        //the files are under res.flist;
+  console.log(res);
    },
    function(err){
-	console.log(err);
+  console.log(err);
    }
 );
 ```
@@ -127,13 +127,13 @@ The success callback will return a JSON object. The attribute `flist` will hold 
 The `deleteFile` function removes from root directory previously uploaded or created file. The file is moved to the user's drive trash.
 
 ```javascript
-window.plugins.gdrive.fileList(
+var fileid = "GoogleDrive_FileID";
+window.plugins.gdrive.deleteFile(fileid,
    function(res){
-        //the files are under res.flist;
-	console.log(res);
+  console.log(res);
    },
    function(err){
-	console.log(err);
+  console.log(err);
    }
 );
 ```
