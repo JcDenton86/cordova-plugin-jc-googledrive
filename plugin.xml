@@ -25,12 +25,6 @@
             </feature>
         </config-file>
 
-        <config-file targert="AndroidManifest.xml" parent="/manifest/application">
-            <meta-data
-                    android:name="com.google.android.geo.API_KEY"
-                    android:value="$ANDROID_CLIENT_ID" />
-        </config-file>
-
         <!--No classes atm-->
         <source-file src="android/GoogleDrive.java" target-dir="src/gr/lexicon/googleDrive" />
     </platform>
