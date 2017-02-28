@@ -112,11 +112,11 @@ The `fileList` function shows a list of files, created or uploaded by the applic
 ```javascript
 window.plugins.gdrive.fileList(
    function(res){
-        //the files are under res.flist;
-  console.log(res);
+      //the files are under res.flist;
+      console.log(res);
    },
    function(err){
-  console.log(err);
+      console.log(err);
    }
 );
 ```
@@ -130,10 +130,10 @@ The `deleteFile` function removes from root directory previously uploaded or cre
 var fileid = "GoogleDrive_FileID";
 window.plugins.gdrive.deleteFile(fileid,
    function(res){
-  console.log(res);
+    console.log(res);
    },
    function(err){
-  console.log(err);
+    console.log(err);
    }
 );
 ```
