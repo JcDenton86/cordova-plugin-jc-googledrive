@@ -1,0 +1,35 @@
+{
+  "name": "cordova-plugin-googledrive",
+  "version": "1.0.0",
+  "description": "A cordova plugin for Android and iOS which integrates Google Drive API in your hybrid app. It supports downloadFile,uploadFile,deleteFile, fileList (future updates will support more actions)",
+  "cordova": {
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JcDenton86/cordova-plugin-googledrive.git"
+  },
+  "keywords": [
+    "google",
+    "drive",
+    "ios",
+    "android",
+    "sdk",
+    "cordova"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=3.0.0"
+    }
+  ],
+  "author": "JcDenton",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JcDenton86/cordova-plugin-googledrive/issues"
+  },
+  "homepage": "https://github.com/JcDenton86/cordova-plugin-googledrive#readme"
+}

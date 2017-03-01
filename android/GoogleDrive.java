@@ -1,4 +1,4 @@
-package gr.lexicon.googleDrive;
+package gr.jcdenton.googleDrive;
 
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -115,6 +115,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     } catch (JSONException ex){ex.getLocalizedMessage();}
                 }
             });
+            return true;
+        } else if("disconnect".equals(action)){
+            mGoogleApiClient.disconnect();
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
             return true;
         }
         return false;

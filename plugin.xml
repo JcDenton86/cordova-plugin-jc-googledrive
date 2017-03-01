@@ -9,7 +9,7 @@
     <engines>
         <engine name="cordova" version=">=3.0.0" />
     </engines>
-    
+
     <js-module src="www/googleDrive.js" name="GoogleDrive">
         <clobbers target="window.plugins.gdrive" />
     </js-module>
@@ -20,12 +20,12 @@
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="GoogleDrive" >
-                <param name="android-package" value="gr.lexicon.googleDrive.GoogleDrive"/>
+                <param name="android-package" value="gr.jcdenton.googleDrive.GoogleDrive"/>
             </feature>
         </config-file>
 
         <!--No classes atm-->
-        <source-file src="android/GoogleDrive.java" target-dir="src/gr/lexicon/googleDrive" />
+        <source-file src="android/GoogleDrive.java" target-dir="src/gr/jcdenton/googleDrive" />
     </platform>
 
     <platform name="ios">
