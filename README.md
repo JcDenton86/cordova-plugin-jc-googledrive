@@ -16,7 +16,7 @@ $ git clone https://github.com/JcDenton86/cordova-plugin-googledrive.git
     * Select Android or iOS.
     * In the Package name field (or Bundle ID for iOS), enter your app's package name.
     * On Android: Paste the SHA1 fingerprint into the form where requested (on iOS skip this)
-        * read more [here](https://developers.google.com/drive/android/get-started) on how to do it
+        * read more under "Get an Android certificate and register your application", [here](https://developers.google.com/drive/android/get-started)
     * Click Create.
 
 ### Install with cordova-cli
