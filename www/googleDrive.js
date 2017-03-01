@@ -16,6 +16,10 @@ GoogleDrive.prototype.deleteFile = function (fileid,successCallback, errorCallba
     cordova.exec(successCallback, errorCallback, "GoogleDrive", "deleteFile", [fileid]);
 };
 
+GoogleDrive.prototype.disconnect = function (successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, "GoogleDrive", "disconnect", []);
+};
+
 GoogleDrive.install = function () {
     if (!window.plugins) {
         window.plugins = {};
