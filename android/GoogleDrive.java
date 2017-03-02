@@ -37,6 +37,7 @@ import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -124,24 +125,53 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         return false;
     }
 
-    private void downloadFile(String destPath,String fileid) {
-        //TODO: complete download file
-        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
-            @Override
-            public void onResult(DriveResource.MetadataResult result) {
-                if (!result.getStatus().isSuccess()) {
-                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"Something went wrong with file download"));
-                    return;
+    private void downloadFile(final String destPath,String fileid) {
+            DriveFile.DownloadProgressListener listener = new DriveFile.DownloadProgressListener() {
+                @Override
+                public void onProgress(long bytesDownloaded, long bytesExpected) {
+                    int progress = (int) (bytesDownloaded * 100 / bytesExpected);
+                    Log.d(TAG, String.format("Loading progress: %d percent", progress));
+                    //mProgressBar.setProgress(progress);
                 }
-                new Thread(){
-                    @Override
-                    public void run() {
-                        //start the download
-                    }
-                }.start();
-            }
-        });
-    }
+            };
+            final DriveFile file = DriveId.decodeFromString(fileid).asDriveFile();
+            file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
+                    .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
+                        @Override
+                        public void onResult(@NonNull final DriveApi.DriveContentsResult result) {
+                            final DriveContents driveContents = result.getDriveContents();
+
+                            if (!result.getStatus().isSuccess()) {
+                                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"Something went wrong with file download"));
+                                return;
+                            }
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        InputStream inputStream = driveContents.getInputStream();
+                                        OutputStream outputStream = new FileOutputStream(destPath);//driveContents.getOutputStream();
+                                        if (inputStream != null) {
+                                            byte[] data = new byte[1024];
+                                            while (inputStream.read(data) != -1) {
+                                                outputStream.write(data);
+                                            }
+                                            inputStream.close();
+                                        }
+                                        outputStream.close();
+                                        try {
+                                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, new JSONObject().put("fileId",file.getDriveId())));
+                                        } catch (JSONException ex) {
+                                            Log.i(TAG, ex.getMessage());
+                                        }
+                                    } catch (IOException e) {
+                                        Log.e(TAG, e.getMessage());
+                                    }
+                                }
+                            }.start();
+                        }
+                    });
+        }
 
     private void uploadFile(final String fpath) {
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
