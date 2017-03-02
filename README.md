@@ -79,7 +79,7 @@ If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise styl
 The `downloadFile` function follows the proper authentication procedure. If the user allows the app to access Google Drive, this method will download the file requested (fileId) and will save it to the path you indicated (toLocalDest).
 
 ```javascript
-var toLocalDest = "path/to/local/destination/";
+var toLocalDest = "path/to/local/destination/file.ext";
 var fileid = "GoogleDrive_FileID";
 window.plugins.gdrive.downloadFile(toLocalDest, fileid,
    function (response) {
