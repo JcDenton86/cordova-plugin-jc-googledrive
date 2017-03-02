@@ -125,6 +125,22 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void downloadFile(String destPath,String fileid) {
+        //TODO: complete download file
+        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
+            @Override
+            public void onResult(DriveResource.MetadataResult result) {
+                if (!result.getStatus().isSuccess()) {
+                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"Something went wrong with file download"));
+                    return;
+                }
+                new Thread(){
+                    @Override
+                    public void run() {
+                        //start the download
+                    }
+                }.start();
+            }
+        });
     }
 
     private void uploadFile(final String fpath) {
