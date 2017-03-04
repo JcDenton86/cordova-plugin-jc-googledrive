@@ -76,7 +76,7 @@ static NSString *kAuthorizerKey = @"";
 }
 
 - (void)deleteFile:(CDVInvokedUrlCommand*)command{
-    
+
     NSString* fileid = [command.arguments objectAtIndex:0];
     dispatch_async(dispatch_get_main_queue(), ^{
         if(self.authorization.canAuthorize){
@@ -130,6 +130,8 @@ static NSString *kAuthorizerKey = @"";
     GTLRDriveQuery_FilesList *query = [GTLRDriveQuery_FilesList query];
 
     query.fields = @"nextPageToken,files(id,name,trashed,modifiedTime)";
+    //query.spaces = @"appDataFolder";
+
     //query.orderBy=@"modifiedDate";
 
     [service executeQuery:query
@@ -181,10 +183,7 @@ static NSString *kAuthorizerKey = @"";
     uploadParameters.useBackgroundSession = YES;
 
     GTLRDrive_File *backUpFile = [GTLRDrive_File object];
-    /*NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"dd/MM/yyyy"];
-    NSString *resultString = [formatter stringFromDate:[NSDate date]];
-    [formatter release];*/
+    //backUpFile.parents = @[@"appDataFolder"];
     backUpFile.name = [fpath lastPathComponent];
     //NSLog(@"%@",backUpFile.name);
 
@@ -223,7 +222,7 @@ static NSString *kAuthorizerKey = @"";
 
 - (void)deleteSelectedFile:(CDVInvokedUrlCommand*)command fid:(NSString*) fileid{
     GTLRDriveService *service = self.driveService;
-    
+
         GTLRDriveQuery_FilesDelete *query = [GTLRDriveQuery_FilesDelete queryWithFileId:fileid];
         [service executeQuery:query completionHandler:^(GTLRServiceTicket *callbackTicket,
                                                         id nilObject,
@@ -236,6 +235,10 @@ static NSString *kAuthorizerKey = @"";
             }
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         }];
+}
+
+- (void)disconnect:(CDVInvokedUrlCommand*)command {
+    GTLRDriveService *service = self.driveService;
 }
 
 - (void)createAFolder:(CDVInvokedUrlCommand*)command dirName:(NSString*) title{
@@ -269,7 +272,8 @@ static NSString *kAuthorizerKey = @"";
   NSURL *redirectURI = [NSURL URLWithString:kRedirectURI];
 
     OIDServiceConfiguration *configuration = [GTMAppAuthFetcherAuthorization configurationForGoogle];
-    NSArray<NSString *> *scopes = @[ kGTLRAuthScopeDriveFile, OIDScopeEmail ];
+    NSArray<NSString *> *scopes = @[ kGTLRAuthScopeDriveFile, OIDScopeEmail,
+                                     kGTLRAuthScopeDriveAppdata];
     OIDAuthorizationRequest *request = [[OIDAuthorizationRequest alloc] initWithConfiguration:configuration
                                                                                  clientId:kClientID
                                                                              clientSecret:nil
