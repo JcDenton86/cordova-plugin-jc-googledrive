@@ -129,7 +129,7 @@ static NSString *kAuthorizerKey = @"";
     GTLRDriveService *service = self.driveService;
     GTLRDriveQuery_FilesList *query = [GTLRDriveQuery_FilesList query];
 
-    query.fields = @"nextPageToken,files(id,name,trashed)";
+    query.fields = @"nextPageToken,files(id,name,trashed,modifiedTime)";
     //query.orderBy=@"modifiedDate";
 
     [service executeQuery:query
@@ -238,11 +238,11 @@ static NSString *kAuthorizerKey = @"";
         }];
 }
 
-- (void)createAFolder:(CDVInvokedUrlCommand*)command{
+- (void)createAFolder:(CDVInvokedUrlCommand*)command dirName:(NSString*) title{
     GTLRDriveService *service = self.driveService;
 
     GTLRDrive_File *folderObj = [GTLRDrive_File object];
-    folderObj.name = [NSString stringWithFormat:@"LexiconMeDB_%@", [NSDate date]];
+    folderObj.name = title;
     folderObj.mimeType = @"application/vnd.google-apps.folder";
 
     GTLRDriveQuery_FilesCreate *query =
