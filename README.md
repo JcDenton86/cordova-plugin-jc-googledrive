@@ -109,7 +109,7 @@ window.plugins.gdrive.uploadFile(fpath,
 
 #### fileList
 
-The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date (only on Android).
+The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date.
 
 ```javascript
 window.plugins.gdrive.fileList(
