@@ -32,6 +32,7 @@ import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.metadata.SearchableCollectionMetadataField;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
@@ -53,6 +54,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     private String toLocalDest;
     private String fileid;
     private String localFPath;
+    private boolean appFolder;
     private CallbackContext mCallbackContext;
 
     @Override
@@ -62,6 +64,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
                     .addApi(Drive.API)
                     .addScope(Drive.SCOPE_FILE)
+                    .addScope(Drive.SCOPE_APPFOLDER)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .build();
@@ -93,7 +96,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         localFPath = args.getString(0);
-                        uploadFile(localFPath);
+                        appFolder = args.getBoolean(1);
+                        uploadFile(localFPath,appFolder);
                     }catch(JSONException ex){ex.getLocalizedMessage();}
                 }
             });
@@ -102,7 +106,11 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             cordova.getThreadPool().execute(new Runnable() {
                 @Override
                 public void run() {
-                    fileList();
+                    try {
+                        appFolder = args.getBoolean(0);
+                        fileList(appFolder);
+                    }catch(JSONException ex){ex.getLocalizedMessage();}
+
                 }
             });
             return true;
@@ -173,7 +181,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     });
         }
 
-    private void uploadFile(final String fpath) {
+    private void uploadFile(final String fpath, final boolean appFolder) {
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
                 .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
 
@@ -209,8 +217,14 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                                 String fname = fPathURI.getLastPathSegment();
                                 //Log.i(TAG,fname);
                                 MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                        .setMimeType("application/octet-stream").setTitle(fname).build();
-                                Drive.DriveApi.getRootFolder(mGoogleApiClient)
+                                        .setMimeType("application/octet-stream")
+                                        .setTitle(fname)
+                                        .build();
+                                DriveFolder uploadFolder = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+                                if(appFolder)
+                                    uploadFolder = Drive.DriveApi.getAppFolder(mGoogleApiClient);
+
+                                uploadFolder
                                         .createFile(mGoogleApiClient, metadataChangeSet, driveContents)
                                         .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
                                             @Override
@@ -231,10 +245,23 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 });
     }
 
-    private void fileList() {
-        Query query = new Query.Builder().addFilter(Filters.and(
+    private void fileList(final boolean appFolder) {
+
+        Query.Builder qb = new Query.Builder();
+        qb.addFilter(Filters.and(
                 Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream"),
-                Filters.eq(SearchableField.TRASHED, false))).build();
+                Filters.eq(SearchableField.TRASHED, false)));
+
+        if(mGoogleApiClient.isConnected()){
+            if(appFolder) {
+                DriveId appFolderId = Drive.DriveApi.getAppFolder(mGoogleApiClient).getDriveId();
+                qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
+            }
+        } else {
+            mGoogleApiClient.connect();
+        }
+
+        Query query = qb.build();
 
         Drive.DriveApi.query(mGoogleApiClient, query)
                 .setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
@@ -272,14 +299,26 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     return;
                 }
                 final Metadata metadata = result.getMetadata();
-                Log.i(TAG, metadata.getTitle());
+                //Log.i(TAG, metadata.getTitle());
+                DriveFile f = metadata.getDriveId().asDriveFile();
                 if(metadata.isTrashable() && !metadata.isTrashed()){
-                    DriveFile f = metadata.getDriveId().asDriveFile();
                     f.trash(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
                         @Override
                         public void onResult(Status status) {
                             if (!status.isSuccess()) {
                                 mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to trash file with id "+metadata.getDriveId() ));
+                                return;
+                            }
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                        }
+                    });
+                    //this will permanently remove file from backup app folder.
+                } else {
+                    f.delete(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                        @Override
+                        public void onResult(@NonNull Status status) {
+                            if (!status.isSuccess()) {
+                                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to delete file with id "+metadata.getDriveId() ));
                                 return;
                             }
                             mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
@@ -295,15 +334,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_RESOLUTION && resultCode == RESULT_OK) {
             mGoogleApiClient.connect();
-            if(mAction.equals("downloadFile")){
-                downloadFile(toLocalDest,fileid);
-            } else if(mAction.equals("uploadFile")){
-                uploadFile(localFPath);
-            } else if(mAction.equals("fileList")){
-                fileList();
-            } else if(mAction.equals("deleteFile")){
-                deleteFile(fileid);
-            }
         }
     }
 
@@ -329,6 +359,15 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "API client connected.");
+        if(mAction.equals("downloadFile")){
+            downloadFile(toLocalDest,fileid);
+        } else if(mAction.equals("uploadFile")){
+            uploadFile(localFPath,appFolder);
+        } else if(mAction.equals("fileList")){
+            fileList(appFolder);
+        } else if(mAction.equals("deleteFile")){
+            deleteFile(fileid);
+        }
     }
 
     @Override
