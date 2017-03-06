@@ -93,11 +93,12 @@ window.plugins.gdrive.downloadFile(toLocalDest, fileid,
 
 #### uploadFile
 
-The `uploadFile` function will upload a file selected from a given local path (fpath) to the root folder of user's drive.
+The `uploadFile` function will upload a file selected from a given local path (fpath) to the root folder of user's drive. You can upload files to the app's folder or root folder based on the boolean value of the second parameter the method takes. If you set the value to `true`, it will upload files under app's folder. 
 
 ```javascript
 var fpath = "path/to/local/file.ext";
-window.plugins.gdrive.uploadFile(fpath,
+var uploadInAppFolder = true;
+window.plugins.gdrive.uploadFile(fpath, uploadInAppFolder,
    function (response) {
    		//simple response message with the status
    },
@@ -109,10 +110,12 @@ window.plugins.gdrive.uploadFile(fpath,
 
 #### fileList
 
-The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date.
+The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date. 
+You can list files from app's folder or root folder based on the boolean value of the first parameter the method takes. If you set the value to `true`, it will fetch files under app's folder. 
 
 ```javascript
-window.plugins.gdrive.fileList(
+var listFilesFromAppFolder = false;
+window.plugins.gdrive.fileList(listFilesFromAppFolder,
    function(res){
       //the files are under res.flist;
       console.log(res);
