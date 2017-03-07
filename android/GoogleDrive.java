@@ -1,4 +1,4 @@
-package gr.jcdenton.googleDrive;
+package gr.jcdenton;
 
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -19,7 +19,6 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
@@ -32,7 +31,6 @@ import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.metadata.SearchableCollectionMetadataField;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
@@ -69,7 +67,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     .addOnConnectionFailedListener(this)
                     .build();
         }
-        mGoogleApiClient.connect();
         Log.i(TAG,"Plugin initialized");
     }
 
@@ -85,8 +82,16 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     try {
                         toLocalDest = args.getString(0);
                         fileid = args.getString(1);
-                        downloadFile(toLocalDest, fileid);
-                    } catch (JSONException ex){ex.getLocalizedMessage();}
+                        if(mGoogleApiClient.isConnected()) {
+                            if (toLocalDest.trim().length() > 0 && fileid.trim().length() > 0)
+                                downloadFile(toLocalDest, fileid);
+                            else
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "one of the parameters is empty"));
+                        } else
+                            mGoogleApiClient.connect();
+                    } catch (JSONException ex){
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
+                    }
                 }
             });
             return true;
@@ -97,8 +102,16 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     try {
                         localFPath = args.getString(0);
                         appFolder = args.getBoolean(1);
-                        uploadFile(localFPath,appFolder);
-                    }catch(JSONException ex){ex.getLocalizedMessage();}
+                        if(mGoogleApiClient.isConnected()) {
+                            if(localFPath.trim().length()>0)
+                                uploadFile(localFPath, appFolder);
+                            else
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"one of the parameters is empty"));
+                        } else
+                            mGoogleApiClient.connect();
+                    }catch(JSONException ex){
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
+                    }
                 }
             });
             return true;
@@ -108,8 +121,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         appFolder = args.getBoolean(0);
-                        fileList(appFolder);
-                    }catch(JSONException ex){ex.getLocalizedMessage();}
+                        if(mGoogleApiClient.isConnected()) {
+                            fileList(appFolder);
+                        } else
+                            mGoogleApiClient.connect();
+                    }catch(JSONException ex){
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
+                    }
 
                 }
             });
@@ -120,8 +138,16 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         fileid = args.getString(0);
-                        deleteFile(fileid);
-                    } catch (JSONException ex){ex.getLocalizedMessage();}
+                        if(mGoogleApiClient.isConnected()) {
+                            if (fileid.trim().length() > 0)
+                                deleteFile(fileid);
+                            else
+                                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "one of the parameters is empty"));
+                        }else
+                            mGoogleApiClient.connect();
+                    } catch (JSONException ex){
+                        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
+                    }
                 }
             });
             return true;
@@ -134,52 +160,52 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void downloadFile(final String destPath,String fileid) {
-            DriveFile.DownloadProgressListener listener = new DriveFile.DownloadProgressListener() {
-                @Override
-                public void onProgress(long bytesDownloaded, long bytesExpected) {
-                    int progress = (int) (bytesDownloaded * 100 / bytesExpected);
-                    Log.d(TAG, String.format("Loading progress: %d percent", progress));
-                    //mProgressBar.setProgress(progress);
-                }
-            };
-            final DriveFile file = DriveId.decodeFromString(fileid).asDriveFile();
-            file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
-                    .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
-                        @Override
-                        public void onResult(@NonNull final DriveApi.DriveContentsResult result) {
-                            final DriveContents driveContents = result.getDriveContents();
+        DriveFile.DownloadProgressListener listener = new DriveFile.DownloadProgressListener() {
+            @Override
+            public void onProgress(long bytesDownloaded, long bytesExpected) {
+                int progress = (int) (bytesDownloaded * 100 / bytesExpected);
+                Log.d(TAG, String.format("Loading progress: %d percent", progress));
+                //mProgressBar.setProgress(progress);
+            }
+        };
+        final DriveFile file = DriveId.decodeFromString(fileid).asDriveFile();
+        file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
+                .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
+                    @Override
+                    public void onResult(@NonNull final DriveApi.DriveContentsResult result) {
+                        final DriveContents driveContents = result.getDriveContents();
 
-                            if (!result.getStatus().isSuccess()) {
-                                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"Something went wrong with file download"));
-                                return;
-                            }
-                            new Thread() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        InputStream inputStream = driveContents.getInputStream();
-                                        OutputStream outputStream = new FileOutputStream(destPath);//driveContents.getOutputStream();
-                                        if (inputStream != null) {
-                                            byte[] data = new byte[1024];
-                                            while (inputStream.read(data) != -1) {
-                                                outputStream.write(data);
-                                            }
-                                            inputStream.close();
-                                        }
-                                        outputStream.close();
-                                        try {
-                                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, new JSONObject().put("fileId",file.getDriveId())));
-                                        } catch (JSONException ex) {
-                                            Log.i(TAG, ex.getMessage());
-                                        }
-                                    } catch (IOException e) {
-                                        Log.e(TAG, e.getMessage());
-                                    }
-                                }
-                            }.start();
+                        if (!result.getStatus().isSuccess()) {
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"Something went wrong with file download"));
+                            return;
                         }
-                    });
-        }
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    InputStream inputStream = driveContents.getInputStream();
+                                    OutputStream outputStream = new FileOutputStream(destPath);//driveContents.getOutputStream();
+                                    if (inputStream != null) {
+                                        byte[] data = new byte[1024];
+                                        while (inputStream.read(data) != -1) {
+                                            outputStream.write(data);
+                                        }
+                                        inputStream.close();
+                                    }
+                                    outputStream.close();
+                                    try {
+                                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, new JSONObject().put("fileId",file.getDriveId())));
+                                    } catch (JSONException ex) {
+                                        Log.i(TAG, ex.getMessage());
+                                    }
+                                } catch (IOException e) {
+                                    Log.e(TAG, e.getMessage());
+                                }
+                            }
+                        }.start();
+                    }
+                });
+    }
 
     private void uploadFile(final String fpath, final boolean appFolder) {
         Drive.DriveApi.newDriveContents(mGoogleApiClient)
@@ -192,14 +218,14 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         if (!result.getStatus().isSuccess()) {
                             mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Failed to create new contents"));
                             return;
-                            }
+                        }
 
                         new Thread() {
                             @Override
                             public void run() {
                                 Log.i(TAG, "New contents created.");
                                 OutputStream outputStream = driveContents.getOutputStream();
-                                Uri fPathURI = Uri.fromFile(new File(fpath));;
+                                Uri fPathURI = Uri.fromFile(new File(fpath));
                                 try{
                                     InputStream inputStream = cordova.getActivity().getContentResolver().openInputStream(fPathURI);
                                     if (inputStream != null) {
@@ -252,13 +278,9 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream"),
                 Filters.eq(SearchableField.TRASHED, false)));
 
-        if(mGoogleApiClient.isConnected()){
-            if(appFolder) {
-                DriveId appFolderId = Drive.DriveApi.getAppFolder(mGoogleApiClient).getDriveId();
-                qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
-            }
-        } else {
-            mGoogleApiClient.connect();
+        if(appFolder) {
+            DriveId appFolderId = Drive.DriveApi.getAppFolder(mGoogleApiClient).getDriveId();
+            qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
         }
 
         Query query = qb.build();
@@ -274,7 +296,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         MetadataBuffer flist = result.getMetadataBuffer();
                         JSONArray response = new JSONArray();
                         for (Metadata file: flist
-                             ) {
+                                ) {
                             try {
                                 response.put(new JSONObject().put("name", file.getTitle()).put("created", file.getCreatedDate().toString()).put("id", file.getDriveId()));
                             }catch (JSONException ex){}
