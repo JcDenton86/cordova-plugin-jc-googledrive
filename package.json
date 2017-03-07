@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-googledrive",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A cordova plugin for Android and iOS which integrates Google Drive API in your hybrid app. It supports downloadFile,uploadFile,deleteFile, fileList (future updates will support more actions)",
   "cordova": {
     "platforms": [

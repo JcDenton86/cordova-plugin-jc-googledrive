@@ -15,17 +15,17 @@
     </js-module>
 
     <platform name="android">
-        <framework src="com.android.support:appcompat-v7:23.0.1" />
+        <!--<framework src="com.android.support:appcompat-v7:23.0.1" />-->
         <framework src="com.google.android.gms:play-services-drive:10.2.0" />
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="GoogleDrive" >
-                <param name="android-package" value="gr.jcdenton.googleDrive.GoogleDrive"/>
+                <param name="android-package" value="gr.jcdenton.GoogleDrive"/>
             </feature>
         </config-file>
 
         <!--No classes atm-->
-        <source-file src="android/GoogleDrive.java" target-dir="src/gr/jcdenton/googleDrive" />
+        <source-file src="android/GoogleDrive.java" target-dir="src/gr/jcdenton" />
     </platform>
 
     <platform name="ios">
