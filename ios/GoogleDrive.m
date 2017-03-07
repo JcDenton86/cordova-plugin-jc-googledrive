@@ -237,10 +237,6 @@ static NSString *kAuthorizerKey = @"";
         }];
 }
 
-- (void)disconnect:(CDVInvokedUrlCommand*)command {
-    GTLRDriveService *service = self.driveService;
-}
-
 - (void)createAFolder:(CDVInvokedUrlCommand*)command dirName:(NSString*) title{
     GTLRDriveService *service = self.driveService;
 
