@@ -143,15 +143,6 @@ window.plugins.gdrive.deleteFile(fileid,
 );
 ```
 
-## RoadMap
-This plugin is under heavy development and it has been created as a requirement on a personal mobile project
-
-Functions to be included:
-
-- createFolderWithName
-- uploadFileInFolder (will allow folder selection)
-- disconnect
-
 ## Contribution
 
 You are more than welcome to provide features and help with the development.
