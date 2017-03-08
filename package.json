@@ -1,9 +1,9 @@
 {
-  "name": "cordova-plugin-googledrive",
-  "version": "1.0.6-dep",
+  "name": "cordova-plugin-jc-googledrive",
+  "version": "1.0.6-nid",
   "description": "Cordova Google Drive Plugin",
   "cordova": {
-    "id":"cordova-plugin-googledrive",
+    "id":"cordova-plugin-jc-googledrive",
     "platforms": [
       "android",
       "ios"
