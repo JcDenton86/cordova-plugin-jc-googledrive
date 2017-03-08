@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-jc-googledrive",
-  "version": "1.0.6-nid",
+  "version": "1.0.6-ngit",
   "description": "Cordova Google Drive Plugin",
   "cordova": {
     "id":"cordova-plugin-jc-googledrive",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/JcDenton86/cordova-plugin-googledrive"
+    "url": "https://github.com/JcDenton86/cordova-plugin-jc-googledrive"
   },
   "keywords": [
     "cordova",
@@ -23,7 +23,7 @@
   ],
   "engines": {
     "cordovaDependencies":{
-      "1.0.5" :{
+      "1.0.0" :{
         "cordova-plugin-cocoapod-support" : ">1.2.0"
       }
     }
