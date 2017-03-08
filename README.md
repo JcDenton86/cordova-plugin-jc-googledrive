@@ -93,7 +93,9 @@ window.plugins.gdrive.downloadFile(toLocalDest, fileid,
 
 #### uploadFile
 
-The `uploadFile` function will upload a file selected from a given local path (fpath) to the root folder of user's drive. You can upload files to the app's folder or root folder based on the boolean value of the second parameter the method takes. If you set the value to `true`, it will upload files under app's folder. 
+The `uploadFile` function will upload a file selected from a given local path (fpath) to the root folder of user's drive. You can upload files to the app's folder or root folder based on the boolean value of the second parameter the method takes. If you set the value to `true`, it will upload files under app's folder.
+The difference between the two folders is the access permission of the file uploaded. Files under app folder, are no visible to the user and only the application has access to them. These files are uploaded under backup section with the rest of the applications.
+This is useful for files with sensitive data, such as databases etc. where the user must not have access or when your app support some kind of backup action.
 
 ```javascript
 var fpath = "path/to/local/file.ext";
