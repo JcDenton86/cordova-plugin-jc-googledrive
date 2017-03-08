@@ -39,7 +39,7 @@ static NSString *kAuthorizerKey = @"";
                     [self downloadAFile:command destPath:destPath fid:fileid];
                     NSLog(@"Already authorized app. No need to ask user again");
             } else{
-                [self runSigninThenHandler:^{
+                [self runSigninThenHandler:command onComplete:^{
                     [self downloadAFile:command destPath:destPath fid:fileid];
                 }];
             }
@@ -62,7 +62,7 @@ static NSString *kAuthorizerKey = @"";
                     [self uploadAFile:command fpath:path appFolder:appfolder];
                     NSLog(@"Already authorized app. No need to ask user again");
             } else{
-                [self runSigninThenHandler:^{
+                [self runSigninThenHandler:command onComplete:^{
                     [self uploadAFile:command fpath:path appFolder:appfolder];
                 }];
             }
@@ -73,18 +73,19 @@ static NSString *kAuthorizerKey = @"";
                                                     messageAsString:@"One of the parameters is empty"]
                                         callbackId:command.callbackId];
     }
-    
+
 }
 
 - (void)fileList:(CDVInvokedUrlCommand*)command{
-    
+
     BOOL appfolder = [command.arguments objectAtIndex:0];
+    NSLog(appfolder? @"YES":@"NO");
     dispatch_async(dispatch_get_main_queue(), ^{
         if(self.authorization.canAuthorize){
             [self fetchFileList:command appFolder:appfolder];
             NSLog(@"Already authorized app. No need to ask user again");
         } else{
-            [self runSigninThenHandler:^{
+            [self runSigninThenHandler:command onComplete:^{
                 [self fetchFileList:command appFolder:appfolder];
             }];
         }
@@ -92,7 +93,7 @@ static NSString *kAuthorizerKey = @"";
 }
 
 - (void)deleteFile:(CDVInvokedUrlCommand*)command{
-    
+
     NSString* fileid = [command.arguments objectAtIndex:0];
     if([fileid stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length>0){
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -100,7 +101,7 @@ static NSString *kAuthorizerKey = @"";
                     [self deleteSelectedFile:command fid:fileid];
                     NSLog(@"Already authorized app. No need to ask user again");
                 } else{
-                    [self runSigninThenHandler:^{
+                    [self runSigninThenHandler:command onComplete:^{
                         [self deleteSelectedFile:command fid:fileid];
                     }];
                 }
@@ -117,7 +118,7 @@ static NSString *kAuthorizerKey = @"";
     NSURL *fileToDownloadURL = [NSURL fileURLWithPath:destPath];
     //NSLog(@"%@", fileToDownloadURL);
     //NSLog(@"%@",fileid);
-    
+
     GTLRDriveService *service = self.driveService;
     GTLRQuery *query = [GTLRDriveQuery_FilesGet queryForMediaWithFileId:fileid];
     [service executeQuery:query
@@ -151,13 +152,13 @@ static NSString *kAuthorizerKey = @"";
 - (void)fetchFileList:(CDVInvokedUrlCommand*)command appFolder:(BOOL)appfolder {
     GTLRDriveService *service = self.driveService;
     GTLRDriveQuery_FilesList *query = [GTLRDriveQuery_FilesList query];
-    
+
     query.fields = @"nextPageToken,files(id,name,trashed,modifiedTime)";
     if(appfolder)
         query.spaces = @"appDataFolder";
-    
+
     //query.orderBy=@"modifiedDate";
-    
+
     [service executeQuery:query
         completionHandler:^(GTLRServiceTicket *callbackTicket,
                             GTLRDrive_FileList *fileList,
@@ -186,10 +187,10 @@ static NSString *kAuthorizerKey = @"";
 
 
 -(void)uploadAFile:(CDVInvokedUrlCommand*)command fpath:(NSString*) fpath appFolder:(BOOL)appfolder{
-    
+
     NSURL *fileToUploadURL = [NSURL fileURLWithPath:fpath];
     NSLog(@"%@", fileToUploadURL);
-    
+
     NSError *fileError;
     if (![fileToUploadURL checkPromisedItemIsReachableAndReturnError:&fileError]) {
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[@"No Local File Found: " stringByAppendingString:fpath]]
@@ -197,38 +198,38 @@ static NSString *kAuthorizerKey = @"";
     }
     //NSString *libs = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex: 0];
     //NSLog(@"Detected Library path: %@", libs);
-    
+
     GTLRDriveService *service = self.driveService;
-    
+
     GTLRUploadParameters *uploadParameters =
     [GTLRUploadParameters uploadParametersWithFileURL:fileToUploadURL
                                              MIMEType:@"application/octet-stream"];
-    
+
     uploadParameters.useBackgroundSession = YES;
-    
+
     GTLRDrive_File *backUpFile = [GTLRDrive_File object];
     if(appfolder)
         backUpFile.parents = @[@"appDataFolder"];
     backUpFile.name = [fpath lastPathComponent];
     //NSLog(@"%@",backUpFile.name);
-    
+
     GTLRDriveQuery_FilesCreate *query =
     [GTLRDriveQuery_FilesCreate queryWithObject:backUpFile
                                uploadParameters:uploadParameters];
-    
+
     //TODO: show native progress indicator
     query.executionParameters.uploadProgressBlock = ^(GTLRServiceTicket *callbackTicket,
                                                       unsigned long long numberOfBytesRead,
                                                       unsigned long long dataLength) {
-        double maxValue = (double)dataLength;
-        double doubleValue = (double)numberOfBytesRead;
+        //double maxValue = (double)dataLength;
+        //double doubleValue = (double)numberOfBytesRead;
     };
-    
+
     [service executeQuery:query
         completionHandler:^(GTLRServiceTicket *callbackTicket,
                             GTLRDrive_File *uploadedFile,
                             NSError *callbackError) {
-            
+
             //NSLog(@"%@", NSStringFromClass([uploadedFile class]));
             CDVPluginResult* pluginResult = nil;
             if (callbackError == nil) {
@@ -247,7 +248,7 @@ static NSString *kAuthorizerKey = @"";
 
 - (void)deleteSelectedFile:(CDVInvokedUrlCommand*)command fid:(NSString*) fileid{
     GTLRDriveService *service = self.driveService;
-    
+
     GTLRDriveQuery_FilesDelete *query = [GTLRDriveQuery_FilesDelete queryWithFileId:fileid];
     [service executeQuery:query completionHandler:^(GTLRServiceTicket *callbackTicket,
                                                     id nilObject,
@@ -264,15 +265,15 @@ static NSString *kAuthorizerKey = @"";
 
 - (void)createAFolder:(CDVInvokedUrlCommand*)command dirName:(NSString*) title{
     GTLRDriveService *service = self.driveService;
-    
+
     GTLRDrive_File *folderObj = [GTLRDrive_File object];
     folderObj.name = title;
     folderObj.mimeType = @"application/vnd.google-apps.folder";
-    
+
     GTLRDriveQuery_FilesCreate *query =
     [GTLRDriveQuery_FilesCreate queryWithObject:folderObj
                                uploadParameters:nil];
-    
+
     [service executeQuery:query
         completionHandler:^(GTLRServiceTicket *callbackTicket,
                             GTLRDrive_File *folderItem,
@@ -286,12 +287,12 @@ static NSString *kAuthorizerKey = @"";
             }
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         }];
-    
+
 }
 
-- (void)runSigninThenHandler:(void (^)(void))handler {
+- (void)runSigninThenHandler:(CDVInvokedUrlCommand*)command onComplete:(void (^)(void))handler{
     NSURL *redirectURI = [NSURL URLWithString:kRedirectURI];
-    
+
     OIDServiceConfiguration *configuration = [GTMAppAuthFetcherAuthorization configurationForGoogle];
     NSArray<NSString *> *scopes = @[ kGTLRAuthScopeDriveFile, OIDScopeEmail,
                                      kGTLRAuthScopeDriveAppdata];
@@ -302,10 +303,10 @@ static NSString *kAuthorizerKey = @"";
                                                                                   redirectURL:redirectURI
                                                                                  responseType:OIDResponseTypeCode
                                                                          additionalParameters:nil];
-    
+
     AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
     NSLog(@"Initiating authorization request with scope: %@", request.scope);
-    
+     
     appDelegate.currentAuthorizationFlow = [OIDAuthState authStateByPresentingAuthorizationRequest:request
                                                                           presentingViewController:self.viewController
                                                                                           callback:^(OIDAuthState *_Nullable authState,
@@ -313,7 +314,7 @@ static NSString *kAuthorizerKey = @"";
                                                                                               if (authState) {
                                                                                                   GTMAppAuthFetcherAuthorization *authorization =
                                                                                                   [[GTMAppAuthFetcherAuthorization alloc] initWithAuthState:authState];
-                                                                                                  
+
                                                                                                   [self setGtmAuthorization:authorization];
                                                                                                   self.driveService.authorizer = authorization;
                                                                                                   NSLog(@"Got authorization tokens. Access token: %@",
@@ -321,7 +322,7 @@ static NSString *kAuthorizerKey = @"";
                                                                                                   if (handler) handler();
                                                                                               } else {
                                                                                                   [self setGtmAuthorization:nil];
-                                                                                                  NSLog(@"Authorization error: %@", [error localizedDescription]);
+                                                                                                  [self.commandDelegate sendPluginResult:                                                                                                   [CDVPluginResult resultWithStatus:                                                                                                CDVCommandStatus_ERROR messageAsString:[error localizedDescription]] callbackId:command.callbackId];                                                                                                NSLog(@"Authorization error: %@", [error localizedDescription]);
                                                                                               }
                                                                                           }];
 }
