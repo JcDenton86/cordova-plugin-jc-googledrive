@@ -55,7 +55,7 @@ static NSString *kAuthorizerKey = @"";
 - (void)uploadFile:(CDVInvokedUrlCommand*)command
 {
     NSString* path = [command.arguments objectAtIndex:0];
-    BOOL appfolder = [command.arguments objectAtIndex:1];
+    BOOL appfolder = [[command.arguments objectAtIndex:1] boolValue];
     if([path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length>0){
         dispatch_async(dispatch_get_main_queue(), ^{
             if(self.authorization.canAuthorize){
@@ -78,8 +78,7 @@ static NSString *kAuthorizerKey = @"";
 
 - (void)fileList:(CDVInvokedUrlCommand*)command{
 
-    BOOL appfolder = [command.arguments objectAtIndex:0];
-    NSLog(appfolder? @"YES":@"NO");
+    BOOL appfolder = [[command.arguments objectAtIndex:0] boolValue];
     dispatch_async(dispatch_get_main_queue(), ^{
         if(self.authorization.canAuthorize){
             [self fetchFileList:command appFolder:appfolder];
@@ -306,7 +305,7 @@ static NSString *kAuthorizerKey = @"";
 
     AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
     NSLog(@"Initiating authorization request with scope: %@", request.scope);
-     
+
     appDelegate.currentAuthorizationFlow = [OIDAuthState authStateByPresentingAuthorizationRequest:request
                                                                           presentingViewController:self.viewController
                                                                                           callback:^(OIDAuthState *_Nullable authState,
