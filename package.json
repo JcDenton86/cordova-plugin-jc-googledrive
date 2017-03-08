@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-googledrive",
-  "version": "1.0.6",
+  "version": "1.0.6-dep",
   "description": "Cordova Google Drive Plugin",
   "cordova": {
     "id":"cordova-plugin-googledrive",
@@ -21,12 +21,13 @@
     "google",
     "drive"
   ],
-  "engines": [
-    {
-      "name": "cordova",
-      "version": ">=3.0.0"
+  "engines": {
+    "cordovaDependencies":{
+      "1.0.5" :{
+        "cordova-plugin-cocoapod-support" : ">1.2.0"
+      }
     }
-  ],
+  },
   "author": "JcDenton",
   "license": "MIT",
   "bugs": {
