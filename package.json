@@ -3,7 +3,7 @@
   "version": "1.0.6",
   "description": "Cordova Google Drive Plugin",
   "cordova": {
-    "id":"cordova-plugin-googledrive"
+    "id":"cordova-plugin-googledrive",
     "platforms": [
       "android",
       "ios"
