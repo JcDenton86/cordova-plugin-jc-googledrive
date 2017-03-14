@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-jc-googledrive",
-  "version": "1.0.6-ngit",
+  "version": "1.0.7",
   "description": "Cordova Google Drive Plugin",
   "cordova": {
     "id":"cordova-plugin-jc-googledrive",
