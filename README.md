@@ -150,7 +150,7 @@ window.plugins.gdrive.deleteFile(fileid,
 You are more than welcome to provide features and help with the development.
 Leaving issues or requests is accepted but my free time in not enough which means that I will try to support this plugin as long as my free time allows.  
 
-## Credits
+## Credits
 
 This plugin has been created by [Jeries Besharat](http://students.ceid.upatras.gr/~besarat)
 Other people that have contributed and commited features and improvements:
