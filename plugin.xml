@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<plugin id="cordova-plugin-jc-googledrive" version="1.0.7" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="cordova-plugin-jc-googledrive" version="1.0.8" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>GoogleDrive</name>
     <description>Access Google Drive</description>
     <author>LexiconMe team</author>
@@ -16,7 +16,7 @@
 
     <platform name="android">
         <!--<framework src="com.android.support:appcompat-v7:23.0.1" />-->
-        <framework src="com.google.android.gms:play-services-drive:10.2.0" />
+        <framework src="com.google.android.gms:play-services-drive:+" />
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="GoogleDrive" >
