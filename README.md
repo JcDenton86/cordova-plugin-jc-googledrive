@@ -70,6 +70,8 @@ Open `AppDelegate.h` file and paste this code before the `@end` command :
 
 That's it! You are ready to use the plugin. 
 
+__important__: in case you use xCode to build or run the app on simulator or device you should open the `.xcworkspace` file instead of .xcodeproj
+
 ## Usage (Javascript)
 
 If you are using jQuery, AngularJS, WinJS or any Promise/A library, promise style is supported.
