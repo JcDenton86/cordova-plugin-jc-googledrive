@@ -158,7 +158,7 @@ window.plugins.gdrive.requestSync(returnFiles,
    }
 );
 ```
-The success callback will return a JSON object. The attribute `flist` will hold an array with the files found on user's Drive.
+The success callback will return a JSON object. The attribute `flist` will hold an array with the files found on user's application folder on Drive.
 
 ## Contribution
 
