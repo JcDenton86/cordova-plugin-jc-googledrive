@@ -52,7 +52,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     private String toLocalDest;
     private String fileid;
     private String localFPath;
-    private boolean appFolder;
+    private boolean appFolder, listOfFiles;
     private CallbackContext mCallbackContext;
 
     @Override
@@ -72,7 +72,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
     @Override
     public boolean execute(String action, final JSONArray args, final CallbackContext callbackContext) throws JSONException {
-        //JSONObject jobject = args.getJSONObject(0);
         mCallbackContext = callbackContext;
         mAction = action;
         if ("downloadFile".equals(action)) {
@@ -80,6 +79,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 @Override
                 public void run() {
                     try {
+                        //initialize global args before checking Google client connection status, as they will result null in onConnected() callback
                         toLocalDest = args.getString(0);
                         fileid = args.getString(1);
                         if(mGoogleApiClient.isConnected()) {
@@ -151,10 +151,22 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 }
             });
             return true;
-        } else if("disconnect".equals(action)){
-            mGoogleApiClient.disconnect();
-            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
-            return true;
+        } else if("requestSync".equals(action)){
+              cordova.getThreadPool().execute(new Runnable() {
+                  @Override
+                  public void run() {
+                      try {
+                          listOfFiles = args.getBoolean(0);
+                          if (mGoogleApiClient.isConnected())
+                              requestSync(listOfFiles);
+                          else
+                              mGoogleApiClient.connect();
+                      }catch (JSONException ex){
+                          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
+                      }
+                  }
+              });
+              return true;
         }
         return false;
     }
@@ -351,6 +363,21 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         });
     }
 
+    private void requestSync(final boolean listOfFiles){
+        Drive.DriveApi.requestSync(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(@NonNull Status status) {
+                if (!status.isSuccess()) {
+                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,status+""));
+                }
+                if(listOfFiles) {
+                    //after syncing with Google Drive fetch files from private app's folder
+                    fileList(true);
+                }
+            }
+        });
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -358,7 +385,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             mGoogleApiClient.connect();
         }
     }
-
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
@@ -389,6 +415,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             fileList(appFolder);
         } else if(mAction.equals("deleteFile")){
             deleteFile(fileid);
+        } else if (mAction.equals("requestSync")){
+            requestSync(listOfFiles);
         }
     }
 

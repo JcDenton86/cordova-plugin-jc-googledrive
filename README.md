@@ -9,7 +9,7 @@ This plugin allows you to authenticate and access user's Google Drive account, u
 $ git clone https://github.com/JcDenton86/cordova-plugin-jc-googledrive.git
 ``
 
-1. Open the [Library page](https://console.developers.google.com/apis/library) and enable the Google Drive API for a project (create a new project if you don't have one) 
+1. Open the [Library page](https://console.developers.google.com/apis/library) and enable the Google Drive API for a project (create a new project if you don't have one)
 2. Open the [Credentials page](https://console.developers.google.com/apis/credentials) in the API Console and follow the steps below in the given order:
     
     * Click Create credentials > OAuth client ID.
@@ -88,7 +88,7 @@ window.plugins.gdrive.downloadFile(toLocalDest, fileid,
        //simple response message with the status
    },
    function (error){
-     	console.log(error);
+     console.log(error);
    }
 );
 ```
@@ -101,35 +101,15 @@ This is useful for files with sensitive data, such as databases etc. where the u
 
 ```javascript
 var fpath = "path/to/local/file.ext";
-var uploadInAppFolder = true;
-window.plugins.gdrive.uploadFile(fpath, uploadInAppFolder,
+window.plugins.gdrive.uploadFile(fpath,
    function (response) {
-   		//simple response message with the status
+      //simple response message with the status
    },
    function (error){
-     	console.log(error);
+     console.log(error);
    }
 );
 ```
-
-#### fileList
-
-The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date. 
-You can list files from app's folder or root folder based on the boolean value of the first parameter the method takes. If you set the value to `true`, it will fetch files under app's folder. 
-
-```javascript
-var listFilesFromAppFolder = false;
-window.plugins.gdrive.fileList(listFilesFromAppFolder,
-   function(res){
-      //the files are under res.flist;
-      console.log(res);
-   },
-   function(err){
-      console.log(err);
-   }
-);
-```
-The success callback will return a JSON object. The attribute `flist` will hold an array with the files found on user's Drive. 
 
 #### deleteFile
 
@@ -139,20 +119,53 @@ The `deleteFile` function removes from root directory previously uploaded or cre
 var fileid = "GoogleDrive_FileID";
 window.plugins.gdrive.deleteFile(fileid,
    function(res){
-    console.log(res);
+   console.log(res);
    },
    function(err){
-    console.log(err);
+   console.log(err);
    }
 );
 ```
+
+#### fileList
+
+The `fileList` function shows a list of files, created or uploaded by the application and have not been trashed. Selecting a file, you can have access to the drive fileId and in the created date. You can list files from app's folder or root folder based on the boolean value of the first parameter the method takes. If you set the value to true, it will fetch files under app's folder.
+
+```javascript
+window.plugins.gdrive.fileList(
+   function(res){
+     //the files are under res.flist;
+   console.log(res);
+   },
+   function(err){
+   console.log(err);
+   }
+);
+```
+
+#### requestSync (currently only on Android)
+
+The `requestSync` function forces a synchronization with the Drive server. This might be useful in case fileList returns an empty array of files.
+
+```javascript
+var returnFiles = true;
+window.plugins.gdrive.requestSync(returnFiles,
+   function(res){
+   console.log(res);
+   },
+   function(err){
+   console.log(err);
+   }
+);
+```
+The success callback will return a JSON object. The attribute `flist` will hold an array with the files found on user's Drive.
 
 ## Contribution
 
 You are more than welcome to provide features and help with the development.
 Leaving issues or requests is accepted but my free time in not enough which means that I will try to support this plugin as long as my free time allows.  
 
-## Credits
+## Credits
 
 This plugin has been created by [Jeries Besharat](http://students.ceid.upatras.gr/~besarat)
 Other people that have contributed and commited features and improvements:
