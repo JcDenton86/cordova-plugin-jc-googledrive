@@ -1,14 +1,5 @@
 package gr.jcdenton;
 
-import org.apache.cordova.CordovaInterface;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONException;
-
 import android.content.Intent;
 import android.content.IntentSender;
 import android.net.Uri;
@@ -34,6 +25,15 @@ import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -287,7 +287,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
         Query.Builder qb = new Query.Builder();
         qb.addFilter(Filters.and(
-                Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream"),
+                Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.file"),
                 Filters.eq(SearchableField.TRASHED, false)));
 
         if(appFolder) {
