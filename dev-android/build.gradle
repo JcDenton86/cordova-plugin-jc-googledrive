@@ -251,10 +251,10 @@ android {
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
     // SUB-PROJECT DEPENDENCIES START
+    compile 'com.google.android.gms:play-services:11.4.2'
     debugCompile project(path: 'CordovaLib', configuration: 'debug')
     releaseCompile project(path: 'CordovaLib', configuration: 'release')
     // SUB-PROJECT DEPENDENCIES END
-    compile 'com.google.android.gms:play-services:11.4.2'
 }
 
 def promptForReleaseKeyPassword() {
