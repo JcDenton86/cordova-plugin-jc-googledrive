@@ -24,6 +24,8 @@ import org.apache.cordova.*;
 
 public class MainActivity extends CordovaActivity
 {
+    GoogleDrive drive;
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -35,7 +37,12 @@ public class MainActivity extends CordovaActivity
             moveTaskToBack(true);
         }
 
+        drive = new GoogleDrive();
+        drive.initialize(this.cordovaInterface, this.appView);
+
         // Set by <content src="index.html" /> in config.xml
         loadUrl(launchUrl);
     }
+
+
 }
