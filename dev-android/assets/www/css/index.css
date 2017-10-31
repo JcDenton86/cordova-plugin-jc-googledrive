@@ -97,6 +97,12 @@ h1 {
     display:none;
 }
 
+.event.drive {
+    color: black;
+    background-color: yellow;
+    display: none;
+}
+
 @keyframes fade {
     from { opacity: 1.0; }
     50% { opacity: 0.4; }

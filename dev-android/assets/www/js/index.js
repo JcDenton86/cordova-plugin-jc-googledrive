@@ -34,17 +34,24 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function () {
         app.receivedEvent('deviceready');
-
-        console.log("Google Drive: " + window.plugins.gdrive);
     },
     // Update DOM on a Received Event
     receivedEvent: function (id) {
         var parentElement = document.getElementById(id);
         var listeningElement = parentElement.querySelector('.listening');
         var receivedElement = parentElement.querySelector('.received');
+        var driveElement = parentElement.querySelector('.drive');
 
         listeningElement.setAttribute('style', 'display:none;');
         receivedElement.setAttribute('style', 'display:block;');
+
+        if (window.plugins.gdrive != undefined) {
+            driveElement.setAttribute('style', 'display:block;');
+            driveElement.innerHTML = "window.plugins.gdrive loaded!";
+        } else {
+            driveElement.setAttribute('style', 'display:block;');
+            driveElement.innerHTML = "window.plugins.gdrive is undefined";
+        }
 
         console.log('Received Event: ' + id);
     }
