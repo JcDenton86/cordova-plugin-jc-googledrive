@@ -34,6 +34,8 @@ var app = {
     // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function () {
         app.receivedEvent('deviceready');
+
+        console.log("Google Drive: " + window.plugins.gdrive);
     },
     // Update DOM on a Received Event
     receivedEvent: function (id) {
