@@ -121,11 +121,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         appFolder = args.getBoolean(0);
-                        if(mGoogleApiClient.isConnected()) {
+                        if (mGoogleApiClient.isConnected()) {
                             fileList(appFolder);
-                        } else
+                        } else {
                             mGoogleApiClient.connect();
-                    }catch(JSONException ex){
+                        }
+                    } catch(JSONException ex) {
+                        Log.e(TAG, "Failed to execute fileList with exception " + ex.getLocalizedMessage());
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
 

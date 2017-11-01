@@ -35,6 +35,23 @@ var app = {
     onDeviceReady: function () {
         app.receivedEvent('deviceready');
     },
+
+
+    clickedListFiles: function(event) {
+        alert("clickedListFiles received event: " + event + "\t" + JSON.stringify(event));
+
+        var appDirectory = false;
+        window.plugins.gdrive.fileList(appDirectory,
+            function(success) {
+                alert("fileList success: " + success);
+                console.log(JSON.stringify(success));
+            },
+            function(error) {
+                alert("fileList: " + error);
+                console.log(JSON.stringify(error));
+         });
+    },
+
     // Update DOM on a Received Event
     receivedEvent: function (id) {
         var parentElement = document.getElementById(id);
@@ -52,6 +69,10 @@ var app = {
             driveElement.setAttribute('style', 'display:block;');
             driveElement.innerHTML = "window.plugins.gdrive is undefined";
         }
+
+        var listFilesButton = document.querySelector('.listFiles');
+        console.log("Have " + parentElement + ", to add " + id);
+        listFilesButton.addEventListener('click', this.clickedListFiles, false);
 
         console.log('Received Event: ' + id);
     }
