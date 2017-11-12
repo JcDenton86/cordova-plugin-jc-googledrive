@@ -55,4 +55,9 @@
       <preference name="InAppBrowserStorageEnabled" value="true" />
       <preference name="disallowOverscroll" value="true" />
     -->
+
+    <feature name="GoogleDrive">
+        <param name="android-package" value="gr.jcdenton.GoogleDrive" />
+    </feature>
+
 </widget>
