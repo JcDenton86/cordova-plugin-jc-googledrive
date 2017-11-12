@@ -165,6 +165,8 @@ The success callback will return a JSON object. The attribute `flist` will hold 
 You are more than welcome to provide features and help with the development.
 Leaving issues or requests is accepted but my free time in not enough which means that I will try to support this plugin as long as my free time allows.  
 
+To contribute to the Android native code please open `dev-android` in Android Studio (on slow connections the initial "Building 'dev-android' Gradle project info" may take a while).
+
 ## Credits
 
 This plugin has been created by [Jeries Besharat](http://students.ceid.upatras.gr/~besarat)

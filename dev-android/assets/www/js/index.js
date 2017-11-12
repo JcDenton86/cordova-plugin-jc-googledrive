@@ -38,16 +38,14 @@ var app = {
 
 
     clickedListFiles: function(event) {
-        alert("clickedListFiles received event: " + event + "\t" + JSON.stringify(event));
-
         var appDirectory = false;
         window.plugins.gdrive.fileList(appDirectory,
             function(success) {
-                alert("fileList success: " + success);
+                alert("fileList success response: " + success);
                 console.log(JSON.stringify(success));
             },
             function(error) {
-                alert("fileList: " + error);
+                alert("fileList error response: " + error);
                 console.log(JSON.stringify(error));
          });
     },
@@ -62,7 +60,7 @@ var app = {
         listeningElement.setAttribute('style', 'display:none;');
         receivedElement.setAttribute('style', 'display:block;');
 
-        if (window.plugins.gdrive != undefined) {
+        if (window.plugins.gdrive !== undefined) {
             driveElement.setAttribute('style', 'display:block;');
             driveElement.innerHTML = "window.plugins.gdrive loaded!";
         } else {
