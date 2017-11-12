@@ -286,13 +286,33 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void fileList(final boolean appFolder) {
-
         Query.Builder qb = new Query.Builder();
         qb.addFilter(Filters.and(
-                Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.file"),
-                Filters.eq(SearchableField.TRASHED, false)));
+                Filters.eq(SearchableField.TRASHED, false),
+                Filters.or(
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.audio"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.document"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.drawing"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.file"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.folder"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.form"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.fusiontable"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.map"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.photo"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.presentation"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.script"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.sites"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.spreadsheet"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.unknown"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.video"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.drive-sdk"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream")
+                )
+            )
+        );
 
-        if(appFolder) {
+        Log.d(TAG, "fileList " + (appFolder ? "is" : "is not") +  " searching for contents of app folder");
+        if (appFolder) {
             DriveId appFolderId = Drive.DriveApi.getAppFolder(mGoogleApiClient).getDriveId();
             qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
         }
@@ -309,16 +329,19 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         }
                         MetadataBuffer flist = result.getMetadataBuffer();
                         JSONArray response = new JSONArray();
-                        for (Metadata file: flist
-                                ) {
+                        for (Metadata file: flist) {
                             try {
                                 response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
-                            }catch (JSONException ex){}
+                            } catch (JSONException ex){
+                                Log.d(TAG, "fileList result metadata process error: " + ex.getLocalizedMessage());
+                            }
                         }
                         JSONObject flistJSON = new JSONObject();
                         try{
                             flistJSON.put("flist", response);
-                        } catch (JSONException ex){}
+                        } catch (JSONException ex) {
+                            Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
+                        }
                         mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,flistJSON));
                         flist.release();
                         //Log.i(TAG,flist.toString());

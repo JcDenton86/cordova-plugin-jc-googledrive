@@ -41,7 +41,7 @@ var app = {
         var appDirectory = false;
         window.plugins.gdrive.fileList(appDirectory,
             function(success) {
-                alert("fileList success response: " + success);
+                alert("fileList success response: " + JSON.stringify(success));
                 console.log(JSON.stringify(success));
             },
             function(error) {
