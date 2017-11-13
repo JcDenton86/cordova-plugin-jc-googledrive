@@ -39,13 +39,17 @@ var app = {
 
     clickedListFiles: function(event) {
         var appDirectory = false;
+        var resultElement = document.getElementsByClassName('drive-result')[0];
+        resultElement.setAttribute('style', 'display:block;');
+        resultElement.innerHTML = "Listing files…";
+
         window.plugins.gdrive.fileList(appDirectory,
             function(success) {
-                alert("fileList success response: " + JSON.stringify(success));
+                resultElement.innerHTML = "List Files success: <br><pre>" + JSON.stringify(success, null, " ") + "</pre>";
                 console.log(JSON.stringify(success));
             },
             function(error) {
-                alert("fileList error response: " + error);
+                resultElement.innerHTML = "List Files error: <br><pre>" + JSON.stringify(error, null, " ") + "</pre>";
                 console.log(JSON.stringify(error));
          });
     },
@@ -60,18 +64,17 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         // Google Drive Development Interface
-        var driveElement = document.getElementsByClassName('drive')[0];
+        var statusElement = document.getElementsByClassName('drive-status')[0];
 
         if (window.plugins.gdrive !== undefined) {
-            driveElement.setAttribute('style', 'display:block;');
-            driveElement.innerHTML = "gdrive global plugin loaded";
+            statusElement.setAttribute('style', 'display:block;');
+            statusElement.innerHTML = "gdrive global plugin loaded";
         } else {
-            driveElement.setAttribute('style', 'display:block;');
-            driveElement.innerHTML = "gdrive global plugin is undefined";
+            statusElement.setAttribute('style', 'display:block;');
+            statusElement.innerHTML = "gdrive global plugin is undefined";
         }
 
-        var listFilesButton = document.getElementsByClassName('listFiles')[0];
-        console.log("Have " + parentElement + ", to add " + id);
+        var listFilesButton = document.getElementsByClassName('drive-listFiles')[0];
         listFilesButton.addEventListener('click', this.clickedListFiles, false);
 
         console.log('Received Event: ' + id);

@@ -36,7 +36,7 @@ body {
 
 /* Portrait layout (default) */
 .app {
-    margin: 1em;
+    margin: 0.25em;
 }
 
 /* Landscape layout (with min-width) */
@@ -62,9 +62,9 @@ h1 {
     border-radius:4px;
     -webkit-border-radius:4px;
     color: black;
-    font-size:12px;
-    margin:0px 30px;
-    padding: .5em;
+    font-size: 12px;
+    margin: .5em;
+    padding: .25em;
     text-align: center;
 }
 
@@ -78,9 +78,14 @@ h1 {
     display:none;
 }
 
-.event.drive {
+.event.drive-status {
     background-color: yellow;
     display: none;
+}
+
+.drive-result {
+    max-width: 100%;
+    text-align: left;
 }
 
 @keyframes fade {
