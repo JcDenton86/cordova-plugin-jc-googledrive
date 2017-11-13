@@ -16,6 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+function displayFileList(files) {
+    var output = "<div>";
+    for (var i = files.length - 1; i >= 0; i--) {
+        var file = files[i];
+        output += "<p class='file-entry'>Name: " + file.name + ", " + file.modifiedTime;
+        output += ", ID: " + file.id.slice(0, 15) + "…"
+        output += "<button class='file-download-btn' data-driveid='"+file.id+"'>Download File</button></p>";
+    }
+    output += "</div>";
+    return output;
+}
+
 var app = {
     // Application Constructor
     initialize: function () {
@@ -36,19 +48,28 @@ var app = {
         app.receivedEvent('deviceready');
     },
 
+    clickedDownloadFile: function(event) {
+        alert("This file has DriveID: '" + this.dataset.driveid + "'");
+    },
+
     clickedListFiles: function(event) {
         var appDirectory = false;
         var resultElement = document.getElementsByClassName('drive-result')[0];
         resultElement.innerHTML = "Listing files…";
 
+        // Rely on displayFileList to ingest the file list and output HTML
+        // Then add event listeners to allow download operatiosn occur.
         window.plugins.gdrive.fileList(appDirectory,
             function(success) {
-                resultElement.innerHTML = "List Files success: <br><pre>" + JSON.stringify(success, null, " ") + "</pre>";
-                console.log(JSON.stringify(success));
+                resultElement.innerHTML = "List Files success: <br>" + displayFileList(success.flist);
+
+                var buttons = document.getElementsByClassName('file-download-btn');
+                for (var i = 0; i < buttons.length; i++) {
+                    buttons[i].addEventListener('click', app.clickedDownloadFile, false);
+                }
             },
             function(error) {
                 resultElement.innerHTML = "List Files error: <br><pre>" + JSON.stringify(error, null, " ") + "</pre>";
-                console.log(JSON.stringify(error));
          });
     },
 

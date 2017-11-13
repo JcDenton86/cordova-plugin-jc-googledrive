@@ -83,6 +83,10 @@ h1 {
     display: none;
 }
 
+.file-entry {
+    border: 1px black solid;
+}
+
 .drive-result {
     max-width: 100%;
     text-align: left;
