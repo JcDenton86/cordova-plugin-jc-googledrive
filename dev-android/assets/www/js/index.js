@@ -36,11 +36,9 @@ var app = {
         app.receivedEvent('deviceready');
     },
 
-
     clickedListFiles: function(event) {
         var appDirectory = false;
         var resultElement = document.getElementsByClassName('drive-result')[0];
-        resultElement.setAttribute('style', 'display:block;');
         resultElement.innerHTML = "Listing files…";
 
         window.plugins.gdrive.fileList(appDirectory,
@@ -52,6 +50,21 @@ var app = {
                 resultElement.innerHTML = "List Files error: <br><pre>" + JSON.stringify(error, null, " ") + "</pre>";
                 console.log(JSON.stringify(error));
          });
+    },
+
+    clickedRequestSync: function(event) {
+        // Android-only
+        var returnFiles = false;
+        var resultElement = document.getElementsByClassName('drive-result')[0];
+        resultElement.innerHTML = "Requesting sync…";
+
+        window.plugins.gdrive.requestSync(returnFiles,
+            function(success) {
+                resultElement.innerHTML = "Request sync success: <br><pre>" + JSON.stringify(success, null, " ") + "</pre>";
+            },
+            function(error) {
+                resultElement.innerHTML = "Request sync error: <br><pre>" + JSON.stringify(error, null, " ") + "</pre>";
+        });
     },
 
     // Update DOM on a Received Event
@@ -77,7 +90,8 @@ var app = {
         var listFilesButton = document.getElementsByClassName('drive-listFiles')[0];
         listFilesButton.addEventListener('click', this.clickedListFiles, false);
 
-        console.log('Received Event: ' + id);
+        var requestSyncButton = document.getElementsByClassName('drive-requestSync')[0];
+        requestSyncButton.addEventListener('click', this.clickedRequestSync, false);
     }
 };
 
