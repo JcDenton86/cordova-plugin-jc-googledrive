@@ -55,20 +55,22 @@ var app = {
         var parentElement = document.getElementById(id);
         var listeningElement = parentElement.querySelector('.listening');
         var receivedElement = parentElement.querySelector('.received');
-        var driveElement = parentElement.querySelector('.drive');
 
         listeningElement.setAttribute('style', 'display:none;');
         receivedElement.setAttribute('style', 'display:block;');
 
+        // Google Drive Development Interface
+        var driveElement = document.getElementsByClassName('drive')[0];
+
         if (window.plugins.gdrive !== undefined) {
             driveElement.setAttribute('style', 'display:block;');
-            driveElement.innerHTML = "window.plugins.gdrive loaded!";
+            driveElement.innerHTML = "gdrive global plugin loaded";
         } else {
             driveElement.setAttribute('style', 'display:block;');
-            driveElement.innerHTML = "window.plugins.gdrive is undefined";
+            driveElement.innerHTML = "gdrive global plugin is undefined";
         }
 
-        var listFilesButton = document.querySelector('.listFiles');
+        var listFilesButton = document.getElementsByClassName('listFiles')[0];
         console.log("Have " + parentElement + ", to add " + id);
         listFilesButton.addEventListener('click', this.clickedListFiles, false);
 
