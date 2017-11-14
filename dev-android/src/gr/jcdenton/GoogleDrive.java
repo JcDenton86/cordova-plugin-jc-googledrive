@@ -202,33 +202,45 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void connect(ConnectApproach approach) {
-        if (mAccount != null && mAccount.getServerAuthCode().length() > 0) {
+        if (mAccount != null && mAccount.getServerAuthCode() != null && mAccount.getServerAuthCode().length() > 0) {
             // in theory we are good from here, must test.
+            Log.d(TAG, "Connecting and found existing maccount and auth code! Good. " + mAccount + ", " + mAccount.getServerAuthCode());
             return;
         }
 
-        GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build();
-        GoogleSignInClient signIn = GoogleSignIn.getClient(cordova.getActivity(), options);
+        GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .build();
+        final GoogleSignInClient signIn = GoogleSignIn.getClient(cordova.getActivity(), options);
 
-        Task<GoogleSignInAccount> task = signIn.silentSignIn();
-        if (task.isSuccessful() && approach == ConnectApproach.SILENT) {
-            mAccount = task.getResult();
+        Task<GoogleSignInAccount> silentTask = signIn.silentSignIn();
+        if (silentTask.isSuccessful()) {
+            mAccount = silentTask.getResult();
+            Log.i(TAG, "Silent login is successful");
             return;
-        }
-
-        task.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                if (null != mCallbackContext) {
-                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Could not authenticate: " + e.getLocalizedMessage()));
+        } else {
+            Log.i(TAG, "Silent login now proceeding to success/fail completion");
+            silentTask.addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
+                @Override
+                public void onSuccess(GoogleSignInAccount googleSignInAccount) {
+                    Log.e(TAG, "Success handler called with sign-in account: " + googleSignInAccount);
+                    mAccount = googleSignInAccount;
                 }
-            }
-        }).addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-            @Override
-            public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                mAccount = googleSignInAccount;
-            }
-        });
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Intent prompt = signIn.getSignInIntent();
+                    cordova.getActivity().startActivity(prompt);
+                }
+            });
+        }
+
+
+        if (approach == ConnectApproach.PROMPT) {
+            Intent prompt = signIn.getSignInIntent();
+            Log.i(TAG, "Prompting for sign-in with intent " + prompt);
+            cordova.getActivity().startActivity(prompt);
+        }
+        Log.i(TAG, "Finished running the connect function.");
     }
 
     private void downloadFile(final String destPath,String fileid) {
