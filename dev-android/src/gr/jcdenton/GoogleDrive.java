@@ -7,7 +7,10 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,6 +31,9 @@ import com.google.android.gms.drive.MetadataChangeSet;
 import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -73,6 +79,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView){
         super.initialize(cordova, webView);
+        this.cordova = cordova;
 
         connect(ConnectApproach.SILENT);
 
@@ -195,12 +202,33 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void connect(ConnectApproach approach) {
-        switch (approach) {
-            case SILENT:
-                break;
-            case PROMPT:
-                break;
+        if (mAccount != null && mAccount.getServerAuthCode().length() > 0) {
+            // in theory we are good from here, must test.
+            return;
         }
+
+        GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build();
+        GoogleSignInClient signIn = GoogleSignIn.getClient(cordova.getActivity(), options);
+
+        Task<GoogleSignInAccount> task = signIn.silentSignIn();
+        if (task.isSuccessful() && approach == ConnectApproach.SILENT) {
+            mAccount = task.getResult();
+            return;
+        }
+
+        task.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                if (null != mCallbackContext) {
+                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Could not authenticate: " + e.getLocalizedMessage()));
+                }
+            }
+        }).addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
+            @Override
+            public void onSuccess(GoogleSignInAccount googleSignInAccount) {
+                mAccount = googleSignInAccount;
+            }
+        });
     }
 
     private void downloadFile(final String destPath,String fileid) {
