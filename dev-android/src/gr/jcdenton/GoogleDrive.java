@@ -47,7 +47,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
     private static final String TAG = "GoogleDrivePlugin";
     private static final int REQUEST_CODE_RESOLUTION = 3;
-    private GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient deprecated_mGoogleApiClient;
     private String mAction = "";
     private String toLocalDest;
     private String fileid;
@@ -58,8 +58,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView){
         super.initialize(cordova, webView);
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
+        if (deprecated_mGoogleApiClient == null) {
+            deprecated_mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
                     .addApi(Drive.API)
                     .addScope(Drive.SCOPE_FILE)
                     .addScope(Drive.SCOPE_APPFOLDER)
@@ -82,13 +82,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         //initialize global args before checking Google client connection status, as they will result null in onConnected() callback
                         toLocalDest = args.getString(0);
                         fileid = args.getString(1);
-                        if(mGoogleApiClient.isConnected()) {
+                        if(deprecated_mGoogleApiClient.isConnected()) {
                             if (toLocalDest.trim().length() > 0 && fileid.trim().length() > 0)
                                 downloadFile(toLocalDest, fileid);
                             else
                                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "one of the parameters is empty"));
                         } else
-                            mGoogleApiClient.connect();
+                            deprecated_mGoogleApiClient.connect();
                     } catch (JSONException ex){
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
@@ -102,13 +102,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     try {
                         localFPath = args.getString(0);
                         appFolder = args.getBoolean(1);
-                        if(mGoogleApiClient.isConnected()) {
+                        if(deprecated_mGoogleApiClient.isConnected()) {
                             if(localFPath.trim().length()>0)
                                 uploadFile(localFPath, appFolder);
                             else
                                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"one of the parameters is empty"));
                         } else
-                            mGoogleApiClient.connect();
+                            deprecated_mGoogleApiClient.connect();
                     }catch(JSONException ex){
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
@@ -121,10 +121,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         appFolder = args.getBoolean(0);
-                        if (mGoogleApiClient.isConnected()) {
+                        if (deprecated_mGoogleApiClient.isConnected()) {
                             fileList(appFolder);
                         } else {
-                            mGoogleApiClient.connect();
+                            deprecated_mGoogleApiClient.connect();
                         }
                     } catch(JSONException ex) {
                         Log.e(TAG, "Failed to execute fileList with exception " + ex.getLocalizedMessage());
@@ -140,13 +140,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         fileid = args.getString(0);
-                        if(mGoogleApiClient.isConnected()) {
+                        if(deprecated_mGoogleApiClient.isConnected()) {
                             if (fileid.trim().length() > 0)
                                 deleteFile(fileid);
                             else
                                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "one of the parameters is empty"));
                         }else
-                            mGoogleApiClient.connect();
+                            deprecated_mGoogleApiClient.connect();
                     } catch (JSONException ex){
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
@@ -159,10 +159,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                   public void run() {
                       try {
                           listOfFiles = args.getBoolean(0);
-                          if (mGoogleApiClient.isConnected()) {
+                          if (deprecated_mGoogleApiClient.isConnected()) {
                               requestSync(listOfFiles);
                           } else {
-                              mGoogleApiClient.connect();
+                              deprecated_mGoogleApiClient.connect();
                           }
                       } catch (JSONException ex) {
                           callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
@@ -184,7 +184,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             }
         };
         final DriveFile file = DriveId.decodeFromString(fileid).asDriveFile();
-        file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
+        file.open(deprecated_mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
                 .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
                     @Override
                     public void onResult(@NonNull final DriveApi.DriveContentsResult result) {
@@ -223,7 +223,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void uploadFile(final String fpath, final boolean appFolder) {
-        Drive.DriveApi.newDriveContents(mGoogleApiClient)
+        Drive.DriveApi.newDriveContents(deprecated_mGoogleApiClient)
                 .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
 
                     @Override
@@ -261,12 +261,12 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                                         .setMimeType("application/octet-stream")
                                         .setTitle(fname)
                                         .build();
-                                DriveFolder uploadFolder = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+                                DriveFolder uploadFolder = Drive.DriveApi.getRootFolder(deprecated_mGoogleApiClient);
                                 if(appFolder)
-                                    uploadFolder = Drive.DriveApi.getAppFolder(mGoogleApiClient);
+                                    uploadFolder = Drive.DriveApi.getAppFolder(deprecated_mGoogleApiClient);
 
                                 uploadFolder
-                                        .createFile(mGoogleApiClient, metadataChangeSet, driveContents)
+                                        .createFile(deprecated_mGoogleApiClient, metadataChangeSet, driveContents)
                                         .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
                                             @Override
                                             public void onResult(DriveFolder.DriveFileResult result) {
@@ -314,13 +314,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
         Log.d(TAG, "fileList " + (appFolder ? "is" : "is not") +  " searching for contents of app folder");
         if (appFolder) {
-            DriveId appFolderId = Drive.DriveApi.getAppFolder(mGoogleApiClient).getDriveId();
+            DriveId appFolderId = Drive.DriveApi.getAppFolder(deprecated_mGoogleApiClient).getDriveId();
             qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
         }
 
         Query query = qb.build();
 
-        Drive.DriveApi.query(mGoogleApiClient, query)
+        Drive.DriveApi.query(deprecated_mGoogleApiClient, query)
                 .setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
                     @Override
                     public void onResult(DriveApi.MetadataBufferResult result) {
@@ -351,7 +351,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void deleteFile(String fileid){
-        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
+        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
             @Override
             public void onResult(@NonNull DriveResource.MetadataResult result) {
                 if (!result.getStatus().isSuccess()) {
@@ -362,7 +362,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 //Log.i(TAG, metadata.getTitle());
                 DriveFile f = metadata.getDriveId().asDriveFile();
                 if(metadata.isTrashable() && !metadata.isTrashed()){
-                    f.trash(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                    f.trash(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
                         @Override
                         public void onResult(Status status) {
                             if (!status.isSuccess()) {
@@ -374,7 +374,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     });
                     //this will permanently remove file from backup app folder.
                 } else {
-                    f.delete(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                    f.delete(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
                         @Override
                         public void onResult(@NonNull Status status) {
                             if (!status.isSuccess()) {
@@ -390,7 +390,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void requestSync(final boolean listOfFiles){
-        Drive.DriveApi.requestSync(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+        Drive.DriveApi.requestSync(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(@NonNull Status status) {
                 if (!status.isSuccess()) {
@@ -408,7 +408,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_RESOLUTION && resultCode == RESULT_OK) {
-            mGoogleApiClient.connect();
+            deprecated_mGoogleApiClient.connect();
         } else {
             mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"user cancelled authorization"));
         }
