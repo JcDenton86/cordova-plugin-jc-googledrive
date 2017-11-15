@@ -27,6 +27,7 @@ import com.google.android.gms.drive.DriveResourceClient;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -368,38 +369,38 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         }
 
         Log.i(TAG, "Querying " + (appFolder ? "app" : "root") + "Folder in fileList function: " + topFolder);
-        topFolder
-                .addOnFailureListener(generalFailureListener)
-                .addOnSuccessListener(new OnSuccessListener<DriveFolder>() {
-            @Override
-            public void onSuccess(DriveFolder driveFolder) {
-                Task<MetadataBuffer> children = resourceClient.listChildren(driveFolder);
-                Log.i(TAG, "Found top drive folder: " + driveFolder.toString() + ", from resource client: " + resourceClient.toString());
-                children
-                        .addOnFailureListener(generalFailureListener)
-                        .addOnSuccessListener(new OnSuccessListener<MetadataBuffer>() {
+        topFolder.continueWith(new Continuation<DriveFolder, Task<MetadataBuffer>>() {
                     @Override
-                    public void onSuccess(MetadataBuffer metadata) {
-                        Log.i(TAG, metadata.toString());
-                        JSONArray response = new JSONArray();
-                        for (Metadata file: metadata) {
-                            try {
-                                response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
-                            } catch (JSONException ex){
-                                Log.d(TAG, "fileList result metadata process error: " + ex.getLocalizedMessage());
-                            }
-                        }
-                        JSONObject flistJSON = new JSONObject();
-                        try{
-                            flistJSON.put("flist", response);
-                        } catch (JSONException ex) {
-                            Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
-                        }
-                        Log.i(TAG, "fileList returning JSON: " + flistJSON.toString() + " for account " + mAccount.toString() + ", email: " + mAccount.getEmail());
-                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, flistJSON));
-                        metadata.release();
+                    public Task<MetadataBuffer> then(@NonNull Task<DriveFolder> task) throws Exception {
+                        DriveFolder driveFolder = task.getResult();
+                        Log.i(TAG, "Continuing get-top-folder task result " + driveFolder + " of task " + task + " with next task (listChildren)");
+                        return resourceClient.listChildren(driveFolder);
                     }
-                });
+                })
+                .addOnFailureListener(generalFailureListener)
+        .addOnSuccessListener(new OnSuccessListener<Task<MetadataBuffer>>() {
+            @Override
+            public void onSuccess(Task<MetadataBuffer> metadataBufferTask) {
+                MetadataBuffer metadata = metadataBufferTask.getResult();
+                Log.i(TAG, "Received metadata in fileList: " + metadata.toString() + " of count: " + metadata.getCount());
+                JSONArray response = new JSONArray();
+                for (Metadata file: metadata) {
+                    Log.i(TAG, "\tfile metadata: " + file.toString());
+                    try {
+                        response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
+                    } catch (JSONException ex){
+                        Log.d(TAG, "fileList result metadata process error: " + ex.getLocalizedMessage());
+                    }
+                }
+                JSONObject flistJSON = new JSONObject();
+                try{
+                    flistJSON.put("flist", response);
+                } catch (JSONException ex) {
+                    Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
+                }
+                Log.i(TAG, "fileList returning JSON: " + flistJSON.toString() + " for account " + mAccount.toString() + ", email: " + mAccount.getEmail());
+                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, flistJSON));
+                metadata.release();
             }
         });
 
