@@ -212,6 +212,9 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .requestProfile()
+                // per https://developers.google.com/android/reference/com/google/android/gms/drive/Drive.html#SCOPE_APPFOLDER
+                // both scopes are limited to app-created folders/files
+                // i.e. you cannot request "list all the files iln google drive", it will always be restricted to ones by this app
                 .requestScopes(Drive.SCOPE_APPFOLDER, Drive.SCOPE_FILE)
                 .build();
         final GoogleSignInClient signIn = GoogleSignIn.getClient(cordova.getActivity(), options);
@@ -368,6 +371,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             topFolder = resourceClient.getRootFolder();
         }
 
+        // TODO directly precede each function's task with a silent sign-in task
+        // i.e. accept a sign-in task parameter, and add our getFolder/listChildren tasks on to that
         Log.i(TAG, "Querying " + (appFolder ? "app" : "root") + "Folder in fileList function: " + topFolder);
         topFolder.continueWith(new Continuation<DriveFolder, Task<MetadataBuffer>>() {
                     @Override
