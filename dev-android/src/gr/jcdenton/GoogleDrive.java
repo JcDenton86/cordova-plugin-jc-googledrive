@@ -18,7 +18,6 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
-import com.google.android.gms.drive.DriveClient;
 import com.google.android.gms.drive.DriveContents;
 import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveFolder;
@@ -28,9 +27,6 @@ import com.google.android.gms.drive.DriveResourceClient;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.drive.query.Filters;
-import com.google.android.gms.drive.query.Query;
-import com.google.android.gms.drive.query.SearchableField;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -73,8 +69,12 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     private CallbackContext mCallbackContext;
 
     private GoogleSignInAccount mAccount;
-    private DriveClient dClient;
-    private DriveResourceClient dResourceClient;
+    private OnFailureListener generalFailureListener = new OnFailureListener() {
+        @Override
+        public void onFailure(@NonNull Exception e) {
+            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.toString()));
+        }
+    };
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView){
@@ -128,7 +128,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     try {
                         localFPath = args.getString(0);
                         appFolder = args.getBoolean(1);
-                        if (mAccount == null) {
+                        if (mAccount != null) {
                             if (localFPath.trim().length()>0)
                                 uploadFile(localFPath, appFolder);
                             else
@@ -148,7 +148,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         appFolder = args.getBoolean(0);
-                        if (mAccount == null) {
+                        if (mAccount != null) {
                             fileList(appFolder);
                         } else {
                             connect(ConnectApproach.PROMPT);
@@ -167,7 +167,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 public void run() {
                     try {
                         fileid = args.getString(0);
-                        if (mAccount == null) {
+                        if (mAccount != null) {
                             if (fileid.trim().length() > 0)
                                 deleteFile(fileid);
                             else
@@ -186,7 +186,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                   public void run() {
                       try {
                           listOfFiles = args.getBoolean(0);
-                          if (mAccount == null) {
+                          if (mAccount != null) {
                               requestSync(listOfFiles);
                           } else {
                               connect(ConnectApproach.PROMPT);
@@ -202,20 +202,23 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void connect(ConnectApproach approach) {
-        if (mAccount != null && mAccount.getServerAuthCode() != null && mAccount.getServerAuthCode().length() > 0) {
+        if (mAccount != null) {
             // in theory we are good from here, must test.
-            Log.d(TAG, "Connecting and found existing maccount and auth code! Good. " + mAccount + ", " + mAccount.getServerAuthCode());
+            Log.d(TAG, "Connecting and found existing mAccount: " + mAccount);
             return;
         }
 
         GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestProfile()
+                .requestScopes(Drive.SCOPE_APPFOLDER, Drive.SCOPE_FILE)
                 .build();
         final GoogleSignInClient signIn = GoogleSignIn.getClient(cordova.getActivity(), options);
 
         Task<GoogleSignInAccount> silentTask = signIn.silentSignIn();
         if (silentTask.isSuccessful()) {
             mAccount = silentTask.getResult();
-            Log.i(TAG, "Silent login is successful");
+            Log.i(TAG, "Silent login is successful. mAccount = " + mAccount + " from silent task " + silentTask);
             return;
         } else {
             Log.i(TAG, "Silent login now proceeding to success/fail completion");
@@ -228,12 +231,12 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
+                    // fall back on explicit prompt
                     Intent prompt = signIn.getSignInIntent();
                     cordova.getActivity().startActivity(prompt);
                 }
             });
         }
-
 
         if (approach == ConnectApproach.PROMPT) {
             Intent prompt = signIn.getSignInIntent();
@@ -356,50 +359,30 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void fileList(final boolean appFolder) {
-        Query.Builder qb = new Query.Builder();
-        qb.addFilter(Filters.and(
-                Filters.eq(SearchableField.TRASHED, false),
-                Filters.or(
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.audio"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.document"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.drawing"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.file"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.folder"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.form"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.fusiontable"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.map"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.photo"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.presentation"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.script"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.sites"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.spreadsheet"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.unknown"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.video"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.drive-sdk"),
-                        Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream")
-                )
-            )
-        );
-
-        Log.d(TAG, "fileList " + (appFolder ? "is" : "is not") +  " searching for contents of app folder");
+        final DriveResourceClient resourceClient = Drive.getDriveResourceClient(cordova.getActivity(), mAccount);
+        Task<DriveFolder> topFolder; // holds root or app
         if (appFolder) {
-            DriveId appFolderId = Drive.DriveApi.getAppFolder(deprecated_mGoogleApiClient).getDriveId();
-            qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
+            topFolder = resourceClient.getAppFolder();
+        } else {
+            topFolder = resourceClient.getRootFolder();
         }
 
-        Query query = qb.build();
-
-        Drive.DriveApi.query(deprecated_mGoogleApiClient, query)
-                .setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
+        Log.i(TAG, "Querying " + (appFolder ? "app" : "root") + "Folder in fileList function: " + topFolder);
+        topFolder
+                .addOnFailureListener(generalFailureListener)
+                .addOnSuccessListener(new OnSuccessListener<DriveFolder>() {
+            @Override
+            public void onSuccess(DriveFolder driveFolder) {
+                Task<MetadataBuffer> children = resourceClient.listChildren(driveFolder);
+                Log.i(TAG, "Found top drive folder: " + driveFolder.toString() + ", from resource client: " + resourceClient.toString());
+                children
+                        .addOnFailureListener(generalFailureListener)
+                        .addOnSuccessListener(new OnSuccessListener<MetadataBuffer>() {
                     @Override
-                    public void onResult(DriveApi.MetadataBufferResult result) {
-                        if (!result.getStatus().isSuccess()) {
-                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to retrieve file list"));
-                            return;
-                        }
-                        MetadataBuffer flist = result.getMetadataBuffer();
+                    public void onSuccess(MetadataBuffer metadata) {
+                        Log.i(TAG, metadata.toString());
                         JSONArray response = new JSONArray();
-                        for (Metadata file: flist) {
+                        for (Metadata file: metadata) {
                             try {
                                 response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
                             } catch (JSONException ex){
@@ -412,11 +395,14 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         } catch (JSONException ex) {
                             Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
                         }
-                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,flistJSON));
-                        flist.release();
-                        //Log.i(TAG,flist.toString());
+                        Log.i(TAG, "fileList returning JSON: " + flistJSON.toString() + " for account " + mAccount.toString() + ", email: " + mAccount.getEmail());
+                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, flistJSON));
+                        metadata.release();
                     }
                 });
+            }
+        });
+
     }
 
     private void deleteFile(String fileid){
