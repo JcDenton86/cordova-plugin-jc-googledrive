@@ -73,6 +73,20 @@ var app = {
          });
     },
 
+    clickedUploadFile: function(event) {
+        var appDirectory = false;
+        var resultElement = document.getElementsByClassName('drive-result')[0];
+        resultElement.innerHTML = "Uploading file…";
+
+        window.plugins.gdrive.uploadFile(JSON.stringify(event), appDirectory,
+            function(success) {
+                resultElement.innerHTML = "Upload success: <br><pre>" + JSON.stringify(success) + "</pre>";
+            },
+            function(error) {
+                resultElement.innerHTML = "Upload error: <br><pre>" + JSON.stringify(success) + "</pre>";
+        });
+    },
+
     clickedRequestSync: function(event) {
         // Android-only
         var returnFiles = false;
@@ -113,6 +127,9 @@ var app = {
 
         var requestSyncButton = document.getElementsByClassName('drive-requestSync')[0];
         requestSyncButton.addEventListener('click', this.clickedRequestSync, false);
+
+        var uploadFileButton = document.getElementsByClassName('drive-uploadFile')[0];
+        uploadFileButton.addEventListener('click', this.clickedUploadFile, false);
     }
 };
 
