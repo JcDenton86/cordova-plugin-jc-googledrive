@@ -1,0 +1,10 @@
+{
+  "cordova-plugin-jc-googledrive": {
+    "source": {
+      "type": "local",
+      "path": "/Users/joe/prodev/cordova-plugin-jc-googledrive"
+    },
+    "is_top_level": true,
+    "variables": {}
+  }
+}

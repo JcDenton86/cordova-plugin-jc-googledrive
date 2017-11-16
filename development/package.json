@@ -1,12 +1,17 @@
 {
-    "name": "gr.jcdenton.googledrive",
-    "displayName": "jc-googledrive",
-    "version": "1.0.0",
-    "description": "A sample Apache Cordova application that responds to the deviceready event.",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "Apache Cordova Team",
-    "license": "Apache-2.0"
+  "name": "gr.jcdenton.googledrive",
+  "displayName": "jc-googledrive",
+  "version": "1.0.0",
+  "description": "A sample Apache Cordova application that responds to the deviceready event.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Apache Cordova Team",
+  "license": "Apache-2.0",
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-jc-googledrive": {}
+    }
+  }
 }
