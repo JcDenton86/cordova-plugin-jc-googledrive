@@ -24,4 +24,5 @@
         <allow-intent href="itms-apps:*" />
     </platform>
     <plugin name="cordova-plugin-jc-googledrive" spec="~1.1.0" />
+    <engine name="android" spec="~6.3.0" />
 </widget>
