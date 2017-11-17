@@ -2,14 +2,11 @@ package gr.jcdenton;
 
 import android.content.Intent;
 import android.content.IntentSender;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -22,14 +19,12 @@ import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.DriveResource;
-import com.google.android.gms.drive.DriveResourceClient;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.MetadataBuffer;
 import com.google.android.gms.drive.MetadataChangeSet;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.drive.query.Filters;
+import com.google.android.gms.drive.query.Query;
+import com.google.android.gms.drive.query.SearchableField;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -40,27 +35,19 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
 
 import static android.app.Activity.RESULT_OK;
-
-enum ConnectApproach {
-    SILENT(0),
-    PROMPT(1);
-
-    ConnectApproach(int i) {
-    }
-}
 
 public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "GoogleDrivePlugin";
     private static final int REQUEST_CODE_RESOLUTION = 3;
-    private GoogleApiClient deprecated_mGoogleApiClient;
+    private GoogleApiClient mGoogleApiClient;
     private String mAction = "";
     private String toLocalDest;
     private String fileid;
@@ -68,22 +55,11 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     private boolean appFolder, listOfFiles;
     private CallbackContext mCallbackContext;
 
-    private GoogleSignInAccount mAccount;
-    private OnFailureListener generalFailureListener = new OnFailureListener() {
-        @Override
-        public void onFailure(@NonNull Exception e) {
-            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.toString()));
-        }
-    };
-
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView){
         super.initialize(cordova, webView);
-        this.cordova = cordova;
-        connect(ConnectApproach.SILENT);
-
-        if (deprecated_mGoogleApiClient == null) {
-            deprecated_mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(cordova.getActivity())
                     .addApi(Drive.API)
                     .addScope(Drive.SCOPE_FILE)
                     .addScope(Drive.SCOPE_APPFOLDER)
@@ -106,51 +82,49 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         //initialize global args before checking Google client connection status, as they will result null in onConnected() callback
                         toLocalDest = args.getString(0);
                         fileid = args.getString(1);
-                        if (mAccount != null) {
+                        if(mGoogleApiClient.isConnected()) {
                             if (toLocalDest.trim().length() > 0 && fileid.trim().length() > 0)
                                 downloadFile(toLocalDest, fileid);
                             else
                                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "one of the parameters is empty"));
-                        } else {
-                            connect(ConnectApproach.PROMPT);
-                        }
+                        } else
+                            mGoogleApiClient.connect();
                     } catch (JSONException ex){
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
                 }
             });
             return true;
-        } else if ("uploadFile".equals(action)){
+        } else if("uploadFile".equals(action)){
             cordova.getThreadPool().execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         localFPath = args.getString(0);
                         appFolder = args.getBoolean(1);
-                        if (mAccount != null) {
-                            if (localFPath.trim().length()>0)
+                        if(mGoogleApiClient.isConnected()) {
+                            if(localFPath.trim().length()>0)
                                 uploadFile(localFPath, appFolder);
                             else
                                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"one of the parameters is empty"));
-                        } else {
-                            connect(ConnectApproach.PROMPT);
-                        }
+                        } else
+                            mGoogleApiClient.connect();
                     }catch(JSONException ex){
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
                 }
             });
             return true;
-        } else if ("fileList".equals(action)){
+        } else if("fileList".equals(action)){
             cordova.getThreadPool().execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         appFolder = args.getBoolean(0);
-                        if (mAccount != null) {
+                        if (mGoogleApiClient.isConnected()) {
                             fileList(appFolder);
                         } else {
-                            connect(ConnectApproach.PROMPT);
+                            mGoogleApiClient.connect();
                         }
                     } catch(JSONException ex) {
                         Log.e(TAG, "Failed to execute fileList with exception " + ex.getLocalizedMessage());
@@ -160,35 +134,35 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 }
             });
             return true;
-        } else if ("deleteFile".equals(action)){
+        } else if("deleteFile".equals(action)){
             cordova.getThreadPool().execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         fileid = args.getString(0);
-                        if (mAccount != null) {
+                        if(mGoogleApiClient.isConnected()) {
                             if (fileid.trim().length() > 0)
                                 deleteFile(fileid);
                             else
                                 callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "one of the parameters is empty"));
-                        } else
-                            connect(ConnectApproach.PROMPT);
+                        }else
+                            mGoogleApiClient.connect();
                     } catch (JSONException ex){
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                     }
                 }
             });
             return true;
-        } else if ("requestSync".equals(action)){
+        } else if("requestSync".equals(action)){
               cordova.getThreadPool().execute(new Runnable() {
                   @Override
                   public void run() {
                       try {
                           listOfFiles = args.getBoolean(0);
-                          if (mAccount != null) {
+                          if (mGoogleApiClient.isConnected()) {
                               requestSync(listOfFiles);
                           } else {
-                              connect(ConnectApproach.PROMPT);
+                              mGoogleApiClient.connect();
                           }
                       } catch (JSONException ex) {
                           callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
@@ -198,54 +172,6 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
               return true;
         }
         return false;
-    }
-
-    private void connect(ConnectApproach approach) {
-        if (mAccount != null) {
-            // in theory we are good from here, must test.
-            Log.d(TAG, "Connecting and found existing mAccount: " + mAccount);
-            return;
-        }
-
-        GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestProfile()
-                // per https://developers.google.com/android/reference/com/google/android/gms/drive/Drive.html#SCOPE_APPFOLDER
-                // both scopes are limited to app-created folders/files
-                // i.e. you cannot request "list all the files iln google drive", it will always be restricted to ones by this app
-                .requestScopes(Drive.SCOPE_APPFOLDER, Drive.SCOPE_FILE)
-                .build();
-        final GoogleSignInClient signIn = GoogleSignIn.getClient(cordova.getActivity(), options);
-
-        Task<GoogleSignInAccount> silentTask = signIn.silentSignIn();
-        if (silentTask.isSuccessful()) {
-            mAccount = silentTask.getResult();
-            Log.i(TAG, "Silent login is successful. mAccount = " + mAccount + " from silent task " + silentTask);
-            return;
-        } else {
-            Log.i(TAG, "Silent login now proceeding to success/fail completion");
-            silentTask.addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-                @Override
-                public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                    Log.e(TAG, "Success handler called with sign-in account: " + googleSignInAccount);
-                    mAccount = googleSignInAccount;
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    // fall back on explicit prompt
-                    Intent prompt = signIn.getSignInIntent();
-                    cordova.getActivity().startActivity(prompt);
-                }
-            });
-        }
-
-        if (approach == ConnectApproach.PROMPT) {
-            Intent prompt = signIn.getSignInIntent();
-            Log.i(TAG, "Prompting for sign-in with intent " + prompt);
-            cordova.getActivity().startActivity(prompt);
-        }
-        Log.i(TAG, "Finished running the connect function.");
     }
 
     private void downloadFile(final String destPath,String fileid) {
@@ -258,7 +184,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             }
         };
         final DriveFile file = DriveId.decodeFromString(fileid).asDriveFile();
-        file.open(deprecated_mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
+        file.open(mGoogleApiClient, DriveFile.MODE_READ_ONLY, listener)
                 .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
                     @Override
                     public void onResult(@NonNull final DriveApi.DriveContentsResult result) {
@@ -297,155 +223,135 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void uploadFile(final String fpath, final boolean appFolder) {
-        Log.i(TAG, "Adding to " + (appFolder ? "app" : "root") + "Folder in uploadFile function");
+        Drive.DriveApi.newDriveContents(mGoogleApiClient)
+                .setResultCallback(new ResultCallback<DriveApi.DriveContentsResult>() {
 
-        final DriveResourceClient resourceClient = Drive.getDriveResourceClient(cordova.getActivity(), mAccount);
-        final Task<DriveFolder> parentFolder; // holds root or app
-        if (appFolder) {
-            parentFolder = resourceClient.getAppFolder();
-        } else {
-            parentFolder = resourceClient.getRootFolder();
-        }
-        
-
-        // TODO directly precede each function's task with a silent sign-in task
-        // i.e. accept a sign-in task parameter, and add our getFolder/listChildren tasks on to that
-        parentFolder.continueWith(new Continuation<DriveFolder, Object>() {
-            @Override
-            public Object then(@NonNull Task<DriveFolder> task) throws Exception {
-                resourceClient.createContents().continueWith(new Continuation<DriveContents, Object>() {
                     @Override
-                    public Object then(@NonNull Task<DriveContents> task) throws Exception {
-                        DriveContents contents = task.getResult();
+                    public void onResult(DriveApi.DriveContentsResult result) {
+                        final DriveContents driveContents = result.getDriveContents();
 
-                        contents.getOutputStream().write(fpath.getBytes());
-//                        FileOutputStream destination = (FileOutputStream) contents.getOutputStream();
-//                        try {
-//                            FileInputStream source = new FileInputStream(fpath);
-//                            byte[] buffer = new byte[1024];
-//                            while (source.available() > 0) {
-//                                source.read(buffer);
-//                                destination.write(buffer);
-//                            }
-//                        } catch (FileNotFoundException e) {
-//                            e.printStackTrace();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
+                        if (!result.getStatus().isSuccess()) {
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Failed to create new contents"));
+                            return;
+                        }
 
-                        // ExecutionOptions are also supported, https://developers.google.com/android/reference/com/google/android/gms/drive/ExecutionOptions
-
-
-                        MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
-                                .setTitle("jc-googledrive-test" + (new Date()).toString())
-                                .setMimeType("text/plain")
-                                .setDescription("File uploaded from jc-googledrive")
-                                .setLastViewedByMeDate(new Date())
-                                .setIndexableText("File uploaded from jc-googledrive")
-                                .build();
-
-                        resourceClient.createFile(parentFolder.getResult(), metadataChangeSet, contents)
-                            .continueWith(new Continuation<DriveFile, Object>() {
-                                @Override
-                                public Object then(@NonNull Task<DriveFile> task) throws Exception {
-                                    Log.i(TAG, "Drive file created!" + task.getResult());
-                                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, task.getResult().toString()));
-                                    return null;
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                Log.i(TAG, "New contents created.");
+                                OutputStream outputStream = driveContents.getOutputStream();
+                                Uri fPathURI = Uri.fromFile(new File(fpath));
+                                try{
+                                    InputStream inputStream = cordova.getActivity().getContentResolver().openInputStream(fPathURI);
+                                    if (inputStream != null) {
+                                        byte[] data = new byte[1024];
+                                        while (inputStream.read(data) != -1) {
+                                            outputStream.write(data);
+                                        }
+                                        inputStream.close();
+                                    }
+                                    outputStream.close();
+                                } catch (IOException e) {
+                                    Log.e(TAG, e.getMessage());
                                 }
-                            });
 
-                        return null;
+                                String fname = fPathURI.getLastPathSegment();
+                                //Log.i(TAG,fname);
+                                MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
+                                        .setMimeType("application/octet-stream")
+                                        .setTitle(fname)
+                                        .build();
+                                DriveFolder uploadFolder = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+                                if(appFolder)
+                                    uploadFolder = Drive.DriveApi.getAppFolder(mGoogleApiClient);
+
+                                uploadFolder
+                                        .createFile(mGoogleApiClient, metadataChangeSet, driveContents)
+                                        .setResultCallback(new ResultCallback<DriveFolder.DriveFileResult>() {
+                                            @Override
+                                            public void onResult(DriveFolder.DriveFileResult result) {
+                                                if (result.getStatus().isSuccess()) {
+                                                    try {
+                                                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, new JSONObject().put("fileId", result.getDriveFile().getDriveId())));
+                                                    } catch (JSONException ex) {
+                                                        Log.i(TAG, ex.getMessage());
+                                                    }
+                                                    Log.i(TAG, result.getDriveFile().getDriveId() + "");
+                                                }
+                                            }
+                                        });
+                            }
+                        }.start();
                     }
                 });
-
-                return null;
-            }
-        });
-
-
-
-//                return resourceClient.createFile(driveFolder, metadataChangeSet, driveContents);;
-//            }
-
-//                .addOnFailureListener(generalFailureListener)
-//                .addOnSuccessListener(new OnSuccessListener<Task<DriveFile>>() {
-//                    @Override
-//                    public void onSuccess(Task<MetadataBuffer> metadataBufferTask) {
-//                        MetadataBuffer metadata = metadataBufferTask.getResult();
-//                        Log.i(TAG, "Received metadata in fileList: " + metadata.toString() + " of count: " + metadata.getCount());
-//                        JSONArray response = new JSONArray();
-//                        for (Metadata file: metadata) {
-//                            Log.i(TAG, "\tfile metadata: " + file.toString());
-//                            try {
-//                                response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
-//                            } catch (JSONException ex){
-//                                Log.d(TAG, "fileList result metadata process error: " + ex.getLocalizedMessage());
-//                            }
-//                        }
-//                        JSONObject flistJSON = new JSONObject();
-//                        try{
-//                            flistJSON.put("flist", response);
-//                        } catch (JSONException ex) {
-//                            Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
-//                        }
-//                        Log.i(TAG, "fileList returning JSON: " + flistJSON.toString() + " for account " + mAccount.toString() + ", email: " + mAccount.getEmail());
-//                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, flistJSON));
-//                        metadata.release();
-//                    }
-//                });
-
     }
 
     private void fileList(final boolean appFolder) {
-        final DriveResourceClient resourceClient = Drive.getDriveResourceClient(cordova.getActivity(), mAccount);
-        Task<DriveFolder> topFolder; // holds root or app
+        Query.Builder qb = new Query.Builder();
+        qb.addFilter(Filters.and(
+                Filters.eq(SearchableField.TRASHED, false),
+                Filters.or(
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.audio"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.document"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.drawing"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.file"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.folder"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.form"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.fusiontable"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.map"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.photo"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.presentation"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.script"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.sites"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.spreadsheet"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.unknown"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.video"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/vnd.google-apps.drive-sdk"),
+                        Filters.eq(SearchableField.MIME_TYPE, "application/octet-stream")
+                )
+            )
+        );
+
+        Log.d(TAG, "fileList " + (appFolder ? "is" : "is not") +  " searching for contents of app folder");
         if (appFolder) {
-            topFolder = resourceClient.getAppFolder();
-        } else {
-            topFolder = resourceClient.getRootFolder();
+            DriveId appFolderId = Drive.DriveApi.getAppFolder(mGoogleApiClient).getDriveId();
+            qb.addFilter(Filters.in(SearchableField.PARENTS, appFolderId));
         }
 
-        // TODO directly precede each function's task with a silent sign-in task
-        // i.e. accept a sign-in task parameter, and add our getFolder/listChildren tasks on to that
-        Log.i(TAG, "Querying " + (appFolder ? "app" : "root") + "Folder in fileList function: " + topFolder);
-        topFolder.continueWith(new Continuation<DriveFolder, Task<MetadataBuffer>>() {
+        Query query = qb.build();
+
+        Drive.DriveApi.query(mGoogleApiClient, query)
+                .setResultCallback(new ResultCallback<DriveApi.MetadataBufferResult>() {
                     @Override
-                    public Task<MetadataBuffer> then(@NonNull Task<DriveFolder> task) throws Exception {
-                        DriveFolder driveFolder = task.getResult();
-                        Log.i(TAG, "Continuing get-top-folder task result " + driveFolder + " of task " + task + " with next task (listChildren)");
-                        return resourceClient.listChildren(driveFolder);
+                    public void onResult(DriveApi.MetadataBufferResult result) {
+                        if (!result.getStatus().isSuccess()) {
+                            mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to retrieve file list"));
+                            return;
+                        }
+                        MetadataBuffer flist = result.getMetadataBuffer();
+                        JSONArray response = new JSONArray();
+                        for (Metadata file: flist) {
+                            try {
+                                response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
+                            } catch (JSONException ex){
+                                Log.d(TAG, "fileList result metadata process error: " + ex.getLocalizedMessage());
+                            }
+                        }
+                        JSONObject flistJSON = new JSONObject();
+                        try{
+                            flistJSON.put("flist", response);
+                        } catch (JSONException ex) {
+                            Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
+                        }
+                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,flistJSON));
+                        flist.release();
+                        //Log.i(TAG,flist.toString());
                     }
-                })
-                .addOnFailureListener(generalFailureListener)
-        .addOnSuccessListener(new OnSuccessListener<Task<MetadataBuffer>>() {
-            @Override
-            public void onSuccess(Task<MetadataBuffer> metadataBufferTask) {
-                MetadataBuffer metadata = metadataBufferTask.getResult();
-                Log.i(TAG, "Received metadata in fileList: " + metadata.toString() + " of count: " + metadata.getCount());
-                JSONArray response = new JSONArray();
-                for (Metadata file: metadata) {
-                    Log.i(TAG, "\tfile metadata: " + file.toString());
-                    try {
-                        response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
-                    } catch (JSONException ex){
-                        Log.d(TAG, "fileList result metadata process error: " + ex.getLocalizedMessage());
-                    }
-                }
-                JSONObject flistJSON = new JSONObject();
-                try{
-                    flistJSON.put("flist", response);
-                } catch (JSONException ex) {
-                    Log.d(TAG, "fileList result json creation: " + ex.getLocalizedMessage());
-                }
-                Log.i(TAG, "fileList returning JSON: " + flistJSON.toString() + " for account " + mAccount.toString() + ", email: " + mAccount.getEmail());
-                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, flistJSON));
-                metadata.release();
-            }
-        });
+                });
     }
 
     private void deleteFile(String fileid){
-        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
+        DriveId.decodeFromString(fileid).asDriveFile().getMetadata(mGoogleApiClient).setResultCallback(new ResultCallback<DriveResource.MetadataResult>() {
             @Override
             public void onResult(@NonNull DriveResource.MetadataResult result) {
                 if (!result.getStatus().isSuccess()) {
@@ -455,8 +361,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 final Metadata metadata = result.getMetadata();
                 //Log.i(TAG, metadata.getTitle());
                 DriveFile f = metadata.getDriveId().asDriveFile();
-                if (metadata.isTrashable() && !metadata.isTrashed()){
-                    f.trash(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                if(metadata.isTrashable() && !metadata.isTrashed()){
+                    f.trash(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
                         @Override
                         public void onResult(Status status) {
                             if (!status.isSuccess()) {
@@ -468,7 +374,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     });
                     //this will permanently remove file from backup app folder.
                 } else {
-                    f.delete(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+                    f.delete(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
                         @Override
                         public void onResult(@NonNull Status status) {
                             if (!status.isSuccess()) {
@@ -484,13 +390,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     }
 
     private void requestSync(final boolean listOfFiles){
-        Drive.DriveApi.requestSync(deprecated_mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
+        Drive.DriveApi.requestSync(mGoogleApiClient).setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(@NonNull Status status) {
                 if (!status.isSuccess()) {
                     mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,status+""));
                 }
-                if (listOfFiles) {
+                if(listOfFiles) {
                     //after syncing with Google Drive fetch files from private app's folder
                     fileList(true);
                 }
@@ -502,7 +408,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_RESOLUTION && resultCode == RESULT_OK) {
-            connect(ConnectApproach.PROMPT);
+            mGoogleApiClient.connect();
         } else {
             mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"user cancelled authorization"));
         }
@@ -529,13 +435,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "API client connected.");
-        if (mAction.equals("downloadFile")){
+        if(mAction.equals("downloadFile")){
             downloadFile(toLocalDest,fileid);
-        } else if (mAction.equals("uploadFile")){
+        } else if(mAction.equals("uploadFile")){
             uploadFile(localFPath,appFolder);
-        } else if (mAction.equals("fileList")){
+        } else if(mAction.equals("fileList")){
             fileList(appFolder);
-        } else if (mAction.equals("deleteFile")){
+        } else if(mAction.equals("deleteFile")){
             deleteFile(fileid);
         } else if (mAction.equals("requestSync")){
             requestSync(listOfFiles);
