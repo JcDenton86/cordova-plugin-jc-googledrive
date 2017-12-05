@@ -18,6 +18,7 @@ $ git clone https://github.com/JcDenton86/cordova-plugin-jc-googledrive.git
     * On Android: Paste the SHA1 fingerprint into the form where requested (on iOS skip this)
         * read more under "Get an Android certificate and register your application", [here](https://developers.google.com/drive/android/get-started)
     * Click Create.
+3. `cd development && cordova platform add android`. Hereafter you can work with `development/platforms/android` in Android Studio.
 
 ### Install with cordova-cli
 

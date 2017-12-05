@@ -10,9 +10,9 @@
   "author": "Apache Cordova Team",
   "license": "Apache-2.0",
   "dependencies": {
-    "cordova-android": "^6.3.0",
-    "cordova-plugin-whitelist": "^1.3.3",
-    "cordova-plugin-jc-googledrive": "~1.1.0"
+    "cordova-android": "^6.4.0",
+    "cordova-plugin-jc-googledrive": "~1.1.0",
+    "cordova-plugin-whitelist": "^1.3.3"
   },
   "cordova": {
     "plugins": {
