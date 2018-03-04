@@ -16,7 +16,8 @@
 
     <platform name="android">
         <!--<framework src="com.android.support:appcompat-v7:23.0.1" />-->
-        <framework src="com.google.android.gms:play-services-drive:+" />
+        <!-- Gradle recommends fixed versions, see build.gradle in IntelliJ -->
+        <framework src="com.google.android.gms:play-services-drive:11.6.0" type="gradleReference" />
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="GoogleDrive" >

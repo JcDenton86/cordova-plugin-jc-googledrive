@@ -18,6 +18,7 @@ $ git clone https://github.com/JcDenton86/cordova-plugin-jc-googledrive.git
     * On Android: Paste the SHA1 fingerprint into the form where requested (on iOS skip this)
         * read more under "Get an Android certificate and register your application", [here](https://developers.google.com/drive/android/get-started)
     * Click Create.
+3. `cd development && cordova platform add android`. Hereafter you can work with `development/platforms/android` in Android Studio.
 
 ### Install with cordova-cli
 
@@ -164,6 +165,20 @@ The success callback will return a JSON object. The attribute `flist` will hold 
 
 You are more than welcome to provide features and help with the development.
 Leaving issues or requests is accepted but my free time in not enough which means that I will try to support this plugin as long as my free time allows.  
+
+To contribute to the Android native code please open `dev-android` in Android Studio (on slow connections the initial "Building 'dev-android' Gradle project info" may take a while).
+
+###### Authentication
+
+While developing the dev-android project you will need your own authentication credentials. _Without your own API key this project will not function._
+
+Please follow the instructions at [https://developers.google.com/drive/android/auth](https://developers.google.com/drive/android/auth). In short:
+
+- Create a new project at [https://console.developers.google.com](https://console.developers.google.com).
+- Then create credentials for a new OAuth client ID.
+  - Run `keytool -exportcert -keystore ~/.android/debug.keystore -list -v` for the SHA1 and `gr.jcdenton` for the package name.
+  - This project set up should be okay without utilitizing the client ID anywhere in our code.
+- Re-build the project and hereafter Google Drive Android authentication should be no problem.
 
 ## Credits
 

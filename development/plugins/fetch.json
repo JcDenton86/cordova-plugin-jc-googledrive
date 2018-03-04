@@ -1,0 +1,18 @@
+{
+  "cordova-plugin-whitelist": {
+    "source": {
+      "type": "registry",
+      "id": "cordova-plugin-whitelist@^1.3.3"
+    },
+    "is_top_level": true,
+    "variables": {}
+  },
+  "cordova-plugin-jc-googledrive": {
+    "source": {
+      "type": "local",
+      "path": "/Users/joe/prodev/cordova-plugin-jc-googledrive"
+    },
+    "is_top_level": true,
+    "variables": {}
+  }
+}
